@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.HapticFeedbackConstants
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import kotlinx.coroutines.CancellationException
+import org.futo.inputmethod.latin.uix.alex.NEXT_WORD_ROW_MAX
 import org.futo.inputmethod.latin.uix.alex.NextWordRowState
 import org.futo.inputmethod.latin.uix.alex.ShowNextWordRowSetting
 import kotlinx.coroutines.Dispatchers
@@ -822,6 +823,19 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
     }
 
     override fun showSuggestionStrip(words: SuggestedWords?) {
+        // alex: kad je drugi red ukljucen, predvidjanja (posle razmaka) idu u drugi red,
+        // a gornji ostaje samo za ispravke i dopune reci koja se kuca/swipe-uje
+        if(words != null && words.isPrediction && context.getSetting(ShowNextWordRowSetting)) {
+            NextWordRowState.topWords.value = emptySet()
+            NextWordRowState.words.value = words.mSuggestedWordInfoList
+                .map { it.mWord }
+                .filter { it.isNotBlank() }
+                .distinctBy { it.lowercase() }
+                .take(NEXT_WORD_ROW_MAX)
+            inputLogic.setSuggestedWords(SuggestedWords.getEmptyInstance())
+            helper.setNeutralSuggestionStrip(expandableCfg)
+            return
+        }
         inputLogic.setSuggestedWords(words)
         // alex: reci iz gornjeg reda, da ih donji red ne ponavlja
         NextWordRowState.topWords.value = words?.mSuggestedWordInfoList?.map { it.mWord.lowercase() }?.toSet() ?: emptySet()
