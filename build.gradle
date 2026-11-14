@@ -375,6 +375,10 @@ android {
         jniLibs {
             useLegacyPackaging true
         }
+        resources {
+            // alex: duplikati iz Anthropic SDK zavisnosti
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST', 'META-INF/LICENSE*', 'META-INF/NOTICE*', 'META-INF/*.kotlin_module', 'META-INF/versions/9/OSGI-INF/MANIFEST.MF']
+        }
     }
 
     ndkVersion '28.2.13676358'
@@ -433,6 +437,7 @@ dependencies {
 
     //implementation 'com.squareup.okhttp3:okhttp:4.11.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1'
+    implementation 'com.anthropic:anthropic-java:3.3.0' // alex: AI provera
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.1'
 
     implementation 'com.akuleshov7:ktoml-core:0.7.1'

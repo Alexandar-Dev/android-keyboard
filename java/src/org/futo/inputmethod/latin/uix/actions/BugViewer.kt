@@ -60,7 +60,8 @@ private val Throwable.rootCause: Throwable?
 
 var CanThrowIfDebug = true
 
-val IsDebug = BuildConfig.DEBUG || (BuildConfig.FLAVOR == "unstable" && CanThrowIfDebug)
+// alex: nas "unstable" build je licna verzija, ne razvojna (bez rusenja na throwIfDebug)
+val IsDebug = BuildConfig.DEBUG
 fun throwIfDebug(ex: Exception) {
     if(IsDebug) {
         throw ex

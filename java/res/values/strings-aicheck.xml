@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- alex: AI check (Claude API) -->
+<resources>
+    <string name="ai_check_title">AI check</string>
+    <string name="ai_check_settings_title">AI check (Claude)</string>
+    <string name="ai_check_loading">Claude is checking spelling and grammar…</string>
+    <string name="ai_check_empty">There is no text to check in this field.</string>
+    <string name="ai_check_no_key">Add your Claude API key first: FUTO Settings → Actions → AI check.</string>
+    <string name="ai_check_err_key">The API key is not valid. Check it in the AI check settings.</string>
+    <string name="ai_check_err_rate">Too many requests right now. Try again in a minute.</string>
+    <string name="ai_check_err_network">No connection to Claude. Check your internet and try again.</string>
+    <string name="ai_check_err_refused">Claude declined to check this text.</string>
+    <string name="ai_check_err_other">The check failed.</string>
+    <string name="ai_check_retry">Try again</string>
+    <string name="ai_check_no_mistakes">No mistakes found</string>
+    <string name="ai_check_all_fixed">All fixed</string>
+    <string name="ai_check_count">Mistakes: %1$d</string>
+    <string name="ai_check_fix">Fix</string>
+    <string name="ai_check_ignore">Ignore</string>
+    <string name="ai_check_fix_all">Fix all</string>
+    <string name="ai_check_done">Done</string>
+    <string name="ai_check_key_title">Claude API key</string>
+    <string name="ai_check_key_hint">Create one at console.anthropic.com → API Keys. It is stored only on this phone.</string>
+    <string name="ai_check_key_test">Test key</string>
+    <string name="ai_check_key_testing">Testing…</string>
+    <string name="ai_check_key_ok">✓ The key works</string>
+    <string name="ai_check_model_title">Model</string>
+    <string name="ai_check_model_opus">Claude Opus 5.5 (best, about 1 cent per check)</string>
+    <string name="ai_check_model_sonnet">Claude Sonnet 5.5 (faster, about 0.5 cent)</string>
+    <string name="ai_check_model_haiku">Claude Haiku 5.5 (fastest, under 0.1 cent)</string>
+    <string name="ai_check_privacy">Text is sent to Anthropic only when you tap AI. Explanations follow the language of the text.</string>
+</resources>

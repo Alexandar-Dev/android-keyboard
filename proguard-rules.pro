@@ -67,3 +67,23 @@
 
 # Keep swipe
 -keep class org.futo.ml.inference.** { *; }
+# alex: AI provera - Anthropic SDK koristi Jackson i refleksiju
+-keep class com.anthropic.** { *; }
+-keep class org.futo.inputmethod.latin.uix.actions.aicheck.AiCheckResult { *; }
+-keep class org.futo.inputmethod.latin.uix.actions.aicheck.AiCheckResult$* { *; }
+-keep class com.fasterxml.jackson.** { *; }
+-keep class kotlin.reflect.** { *; }
+-keep class kotlin.Metadata { *; }
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,RuntimeVisibleAnnotations
+-dontwarn com.anthropic.**
+-dontwarn com.fasterxml.jackson.**
+-dontwarn io.opentelemetry.**
+-dontwarn io.swagger.**
+-dontwarn com.standardwebhooks.**
+-dontwarn org.slf4j.**
+-dontwarn javax.annotation.**
+-dontwarn java.beans.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+-dontwarn com.google.errorprone.annotations.**

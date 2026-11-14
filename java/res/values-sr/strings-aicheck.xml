@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- alex: AI provera (Claude API), srpski latinica -->
+<resources>
+    <string name="ai_check_title">AI provera</string>
+    <string name="ai_check_settings_title">AI provera (Claude)</string>
+    <string name="ai_check_loading">Claude proverava pravopis i gramatiku…</string>
+    <string name="ai_check_empty">U ovom polju nema teksta za proveru.</string>
+    <string name="ai_check_no_key">Prvo dodaj Claude API ključ: FUTO podešavanja → Actions → AI provera.</string>
+    <string name="ai_check_err_key">API ključ nije ispravan. Proveri ga u podešavanjima AI provere.</string>
+    <string name="ai_check_err_rate">Previše zahteva trenutno. Probaj ponovo za minut.</string>
+    <string name="ai_check_err_network">Nema veze sa Claude-om. Proveri internet i probaj ponovo.</string>
+    <string name="ai_check_err_refused">Claude je odbio da proveri ovaj tekst.</string>
+    <string name="ai_check_err_other">Provera nije uspela.</string>
+    <string name="ai_check_retry">Probaj ponovo</string>
+    <string name="ai_check_no_mistakes">Nema grešaka</string>
+    <string name="ai_check_all_fixed">Sve ispravljeno</string>
+    <string name="ai_check_count">Greške: %1$d</string>
+    <string name="ai_check_fix">Ispravi</string>
+    <string name="ai_check_ignore">Ostavi</string>
+    <string name="ai_check_fix_all">Ispravi sve</string>
+    <string name="ai_check_done">Gotovo</string>
+    <string name="ai_check_key_title">Claude API ključ</string>
+    <string name="ai_check_key_hint">Napraviš ga na console.anthropic.com → API Keys. Čuva se samo na ovom telefonu.</string>
+    <string name="ai_check_key_test">Proveri ključ</string>
+    <string name="ai_check_key_testing">Proveravam…</string>
+    <string name="ai_check_key_ok">✓ Ključ radi</string>
+    <string name="ai_check_model_title">Model</string>
+    <string name="ai_check_model_opus">Claude Opus 5.5 (najbolji, oko 1 cent po proveri)</string>
+    <string name="ai_check_model_sonnet">Claude Sonnet 5.5 (brži, oko 0,5 centa)</string>
+    <string name="ai_check_model_haiku">Claude Haiku 5.5 (najbrži, ispod 0,1 centa)</string>
+    <string name="ai_check_privacy">Tekst ide Anthropic-u samo kad pritisneš AI. Objašnjenja su na jeziku teksta.</string>
+</resources>
