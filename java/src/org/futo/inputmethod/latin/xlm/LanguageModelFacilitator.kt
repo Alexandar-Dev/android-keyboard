@@ -204,6 +204,7 @@ public class LanguageModelFacilitator(
 
     private suspend fun runLanguageModel(values: PredictionInputValues): ArrayList<SuggestedWordInfo>? {
         if(prepareLanguageModel() == null) return null
+        val locale = dictionaryFacilitator.primaryLocale ?: return null
 
         val keyboard = keyboardSwitcher.keyboard ?: return null
 
