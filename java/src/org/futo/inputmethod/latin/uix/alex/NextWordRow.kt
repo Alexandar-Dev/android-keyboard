@@ -39,8 +39,9 @@ import org.futo.inputmethod.latin.uix.settings.useDataStoreValue
 
 val ShowNextWordRowSetting = SettingsKey(booleanPreferencesKey("alex_next_word_row"), false)
 
-// alex: talasasta (swipe) / ravna (transformer) linija ispod predloga
-val ShowSuggestionIndicatorsSetting = SettingsKey(booleanPreferencesKey("alex_suggestion_indicators"), false)
+// alex: talasasta linija ispod ispravki (swipe) i ravna ispod predloga (transformer), posebno
+val ShowSwipeIndicatorSetting = SettingsKey(booleanPreferencesKey("alex_indicator_swipe"), false)
+val ShowTransformerIndicatorSetting = SettingsKey(booleanPreferencesKey("alex_indicator_transformer"), false)
 
 const val NEXT_WORD_ROW_MAX = 8
 val NEXT_WORD_ROW_HEIGHT = 40.dp
@@ -64,7 +65,7 @@ fun NextWordRow(manager: KeyboardManagerForAction) {
     val sepColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
     val textColor = MaterialTheme.colorScheme.onSurface
     val lineIcon = painterResource(id = R.drawable.transformer_suggestion)
-    val showLine = useDataStoreValue(ShowSuggestionIndicatorsSetting)
+    val showLine = useDataStoreValue(ShowTransformerIndicatorSetting)
 
     LazyRow(
         modifier = Modifier.fillMaxWidth().height(NEXT_WORD_ROW_HEIGHT).padding(horizontal = 8.dp),

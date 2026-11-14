@@ -305,11 +305,11 @@ fun RowScope.SuggestionItem(words: SuggestedWords, idx: Int, isPrimary: Boolean,
         else -> LocalKeyboardScheme.current.onSurfaceVariant
     }
 
-    val alexShowInd = useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowSuggestionIndicatorsSetting)
+    val alexShowTr = useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowTransformerIndicatorSetting)
+    val alexShowSw = useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowSwipeIndicatorSetting)
     val iconToUse = when {
-        !alexShowInd -> null
-        wordInfo?.mOriginatesFromTransformerLM == true -> painterResource(id = R.drawable.transformer_suggestion)
-        wordInfo?.mOriginatesFromSwipeModel    == true -> painterResource(id = R.drawable.swipemodel_indicator)
+        wordInfo?.mOriginatesFromTransformerLM == true -> if(alexShowTr) painterResource(id = R.drawable.transformer_suggestion) else null
+        wordInfo?.mOriginatesFromSwipeModel    == true -> if(alexShowSw) painterResource(id = R.drawable.swipemodel_indicator) else null
         else -> null
     }
     val textButtonModifier = if(iconToUse != null) {
@@ -1088,11 +1088,11 @@ private fun CandidateItem(modifier: Modifier, it: SuggestedWordInfo, listener: S
     val descTextStyle =
         suggestionStyleCandidateDescription.copy(color = color.copy(alpha = 0.5f)).withCustomFont() // TODO: High contrast for high contrast theme
     // alex: oznake kao u obicnom redu (talasasta = swipe model, ravna = transformer)
-    val alexShowInd = useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowSuggestionIndicatorsSetting)
+    val alexShowTr = useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowTransformerIndicatorSetting)
+    val alexShowSw = useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowSwipeIndicatorSetting)
     val alexIcon = when {
-        !alexShowInd -> null
-        it.mOriginatesFromTransformerLM -> painterResource(id = R.drawable.transformer_suggestion)
-        it.mOriginatesFromSwipeModel -> painterResource(id = R.drawable.swipemodel_indicator)
+        it.mOriginatesFromTransformerLM -> if(alexShowTr) painterResource(id = R.drawable.transformer_suggestion) else null
+        it.mOriginatesFromSwipeModel -> if(alexShowSw) painterResource(id = R.drawable.swipemodel_indicator) else null
         else -> null
     }
     val alexIconMod = if(alexIcon != null) {

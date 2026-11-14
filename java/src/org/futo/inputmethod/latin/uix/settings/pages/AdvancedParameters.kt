@@ -50,9 +50,13 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
         )
 
         SettingToggleDataStore(
-            title = stringResource(R.string.alex_suggestion_indicators),
-            subtitle = stringResource(R.string.alex_suggestion_indicators_subtitle),
-            setting = org.futo.inputmethod.latin.uix.alex.ShowSuggestionIndicatorsSetting
+            title = stringResource(R.string.alex_indicator_swipe),
+            setting = org.futo.inputmethod.latin.uix.alex.ShowSwipeIndicatorSetting
+        )
+
+        SettingToggleDataStore(
+            title = stringResource(R.string.alex_indicator_transformer),
+            setting = org.futo.inputmethod.latin.uix.alex.ShowTransformerIndicatorSetting
         )
 
         SettingToggleDataStore(
