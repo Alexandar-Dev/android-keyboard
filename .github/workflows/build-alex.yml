@@ -20,6 +20,10 @@ jobs:
       - name: LFS u submodulima
         run: git submodule foreach --recursive 'git lfs pull || true'
 
+      - name: Ime aplikacije (Alex) i u prevodima
+        run: |
+          find translations/devbuild -name '*.xml' -exec sed -i -E '/name="(english_ime_name|spell_checker_service_name|english_ime_settings|android_spell_checker_settings)"/d' {} + || true
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
