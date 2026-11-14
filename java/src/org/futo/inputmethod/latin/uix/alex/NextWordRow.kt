@@ -43,7 +43,7 @@ val ShowNextWordRowSetting = SettingsKey(booleanPreferencesKey("alex_next_word_r
 val ShowSwipeIndicatorSetting = SettingsKey(booleanPreferencesKey("alex_indicator_swipe"), false)
 val ShowTransformerIndicatorSetting = SettingsKey(booleanPreferencesKey("alex_indicator_transformer"), false)
 
-const val NEXT_WORD_ROW_MAX = 8
+const val NEXT_WORD_ROW_MAX = 12 // vise, jer se ponovljene iz gornjeg reda izbacuju
 val NEXT_WORD_ROW_HEIGHT = 40.dp
 
 object NextWordRowState {
