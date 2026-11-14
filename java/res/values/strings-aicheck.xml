@@ -38,7 +38,7 @@
     <string name="alex_next_word_row_subtitle">An extra row under the suggestions that predicts the next word from the sentence (transformer). The keyboard gets a bit taller.</string>
     <string name="alex_scrollable_suggestions">Scrollable suggestion bar</string>
     <string name="alex_scrollable_suggestions_subtitle">Swipe the suggestions left to see more choices. Takes effect when you open the keyboard again.</string>
-    <string name="ai_translate_title">Translate (EN/SR)</string>
+    <string name="ai_translate_title">Translate to English</string>
     <string name="ai_translate_loading">Claude is translating…</string>
     <string name="ai_translate_replace">Replace</string>
 </resources>

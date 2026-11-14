@@ -38,7 +38,7 @@
     <string name="alex_next_word_row_subtitle">Dodatni red ispod predloga koji nudi sledeću reč prema rečenici (transformer). Tastatura je malo viša.</string>
     <string name="alex_scrollable_suggestions">Klizni red predloga</string>
     <string name="alex_scrollable_suggestions_subtitle">Prevuci predloge ulevo da vidiš još izbora. Važi od sledećeg otvaranja tastature.</string>
-    <string name="ai_translate_title">Prevod (EN/SR)</string>
+    <string name="ai_translate_title">Prevedi na engleski</string>
     <string name="ai_translate_loading">Claude prevodi…</string>
     <string name="ai_translate_replace">Zameni</string>
 </resources>
