@@ -21,7 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
+import org.futo.inputmethod.latin.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,6 +60,7 @@ fun NextWordRow(manager: KeyboardManagerForAction) {
     val words = NextWordRowState.words.value
     val sepColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
     val textColor = MaterialTheme.colorScheme.onSurface
+    val lineIcon = painterResource(id = R.drawable.transformer_suggestion)
 
     LazyRow(
         modifier = Modifier.fillMaxWidth().height(NEXT_WORD_ROW_HEIGHT).padding(horizontal = 8.dp),
@@ -67,6 +73,15 @@ fun NextWordRow(manager: KeyboardManagerForAction) {
                     modifier = Modifier
                         .fillMaxHeight()
                         .widthIn(min = 64.dp)
+                        .drawBehind {
+                            // ravna linija ispod = predlog od transformera (kao u FUTO-u)
+                            with(lineIcon) {
+                                val sz = lineIcon.intrinsicSize
+                                translate(left = (size.width - sz.width) / 2f, top = size.height - sz.height * 2f) {
+                                    draw(sz, colorFilter = ColorFilter.tint(textColor.copy(alpha = 0.7f)))
+                                }
+                            }
+                        }
                         .clickable {
                             manager.performHapticAndAudioFeedback(Constants.CODE_TAB, view)
                             NextWordRowState.clear()

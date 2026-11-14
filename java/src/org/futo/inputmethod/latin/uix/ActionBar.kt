@@ -1085,8 +1085,28 @@ private fun CandidateItem(modifier: Modifier, it: SuggestedWordInfo, listener: S
         suggestionStylePrimary.copy(color = color).withCustomFont()
     val descTextStyle =
         suggestionStyleCandidateDescription.copy(color = color.copy(alpha = 0.5f)).withCustomFont() // TODO: High contrast for high contrast theme
+    // alex: oznake kao u obicnom redu (talasasta = swipe model, ravna = transformer)
+    val alexIcon = when {
+        it.mOriginatesFromTransformerLM -> painterResource(id = R.drawable.transformer_suggestion)
+        it.mOriginatesFromSwipeModel -> painterResource(id = R.drawable.swipemodel_indicator)
+        else -> null
+    }
+    val alexIconMod = if(alexIcon != null) {
+        Modifier.drawBehind {
+            with(alexIcon) {
+                val iconSize = alexIcon.intrinsicSize
+                translate(
+                    left = (size.width - iconSize.width) / 2.0f,
+                    top = size.height - iconSize.height * (if(it.mOriginatesFromSwipeModel) 1.3f else 2.0f)
+                ) {
+                    draw(iconSize, colorFilter = ColorFilter.tint(color = color))
+                }
+            }
+        }
+    } else Modifier
     Row(
         modifier
+            .then(alexIconMod)
             .width(width)
             .combinedClickable(
                 enabled = word != null,
