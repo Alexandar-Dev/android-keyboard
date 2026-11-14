@@ -43,7 +43,12 @@ public final class AiCheckClient {
     private static final String SYSTEM =
         "You are a proofreader built into a phone keyboard. The user wrote the text inside <text> tags "
         + "and wants to know which words are wrong.\n"
-        + "Find spelling, grammar and punctuation mistakes. Only real mistakes: keep the user's style, "
+        + "Find spelling, grammar and punctuation mistakes. Every token that is not a real word is a mistake: "
+        + "it is a typo or a mis-swipe on a phone keyboard (Serbian QWERTZ layout, neighbouring keys get hit, "
+        + "letters get doubled or dropped). Guess the intended word from the neighbouring keys and the sentence "
+        + "(on QWERTZ the z and y keys are swapped compared to QWERTY, so English \"you\" often comes out as \"zou\" or \"zpi\"). "
+        + "Always flag such a token, with your best guess as the replacement. "
+        + "Apart from that, only real mistakes: keep the user's style, "
         + "slang, word choice, tone and informal register. Do not rewrite sentences, do not suggest "
         + "stylistic improvements, and ignore missing capitalization or a missing final period in casual chat messages.\n"
         + "Each issue's \"original\" must be copied exactly from the text, as short as possible (usually one word); "
