@@ -32,6 +32,17 @@ jobs:
       - name: NDK
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;28.2.13676358" "build-tools;35.0.0" "platforms;android-35" > /dev/null
 
+      - name: Potpis (licni kljuc)
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          test -n "$DEBUG_KEYSTORE_B64" || { echo "Nema DEBUG_KEYSTORE_B64"; exit 1; }
+          echo "$DEBUG_KEYSTORE_B64" | base64 -d > alex.keystore
+          echo "storePassword=android" > keystore.properties
+          echo "keyPassword=android" >> keystore.properties
+          echo "keyAlias=androiddebugkey" >> keystore.properties
+          echo "storeFile=alex.keystore" >> keystore.properties
+
       - name: Build
         env:
           VERSION_CODE: ${{ github.run_number }}
