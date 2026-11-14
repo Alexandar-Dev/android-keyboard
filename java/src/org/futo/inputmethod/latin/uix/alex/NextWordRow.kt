@@ -35,6 +35,7 @@ import org.futo.inputmethod.latin.uix.settings.useDataStoreValue
 val ShowNextWordRowSetting = SettingsKey(booleanPreferencesKey("alex_next_word_row"), false)
 
 const val NEXT_WORD_ROW_MAX = 8
+val NEXT_WORD_ROW_HEIGHT = 40.dp
 
 object NextWordRowState {
     val words = mutableStateOf<List<String>>(emptyList())
@@ -56,7 +57,7 @@ fun NextWordRow(manager: KeyboardManagerForAction) {
     val textColor = MaterialTheme.colorScheme.onSurface
 
     LazyRow(
-        modifier = Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 8.dp),
+        modifier = Modifier.fillMaxWidth().height(NEXT_WORD_ROW_HEIGHT).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         itemsIndexed(words) { i, w ->

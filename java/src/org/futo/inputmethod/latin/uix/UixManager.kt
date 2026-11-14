@@ -748,8 +748,10 @@ class UixManager(private val latinIME: LatinIME) {
                 )
             }
 
-            // alex: red za sledecu rec posle swipe-a
-            org.futo.inputmethod.latin.uix.alex.NextWordRow(keyboardManagerForAction)
+            // alex: red za sledecu rec posle swipe-a (u kliznom rezimu ide ispod kliznih predloga, vidi dole)
+            if(!needToUseExpandableSuggestionUi) {
+                org.futo.inputmethod.latin.uix.alex.NextWordRow(keyboardManagerForAction)
+            }
         }
     }
 
@@ -1312,12 +1314,14 @@ class UixManager(private val latinIME: LatinIME) {
 
                     val kbHeight = remember { mutableIntStateOf(latinIME.size.value!!.height) }
                     val keyboardViewOffset = remember(needToUseExpandableSuggestionUi) { mutableIntStateOf(0) }
+                    val alexNextRowOn = org.futo.inputmethod.latin.uix.settings.useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowNextWordRowSetting) // alex
                     Box(Modifier.let {
                         if(needToUseExpandableSuggestionUi) {
                             it.height(
                                 with(LocalDensity.current) { kbHeight.intValue.toDp() }
                                         + latinIME.sizingCalculator.calculateSuggestionBarHeightDp().dp
                                         + gap
+                                        + (if(alexNextRowOn) org.futo.inputmethod.latin.uix.alex.NEXT_WORD_ROW_HEIGHT else 0.dp)
                             )
                         } else {
                             it
@@ -1334,6 +1338,13 @@ class UixManager(private val latinIME: LatinIME) {
                                 keyboardHeight = (latinIME.size.value?.height ?: kbHeight.intValue) + with(LocalDensity.current) { navBarHeight().toPx().toInt() },
                                 expandableSuggestionCfg = expandableSuggestionCfg.value
                             )
+                            // alex: red za sledecu rec ispod kliznih predloga
+                            if(alexNextRowOn) {
+                                Box(Modifier.align(Alignment.TopStart).fillMaxWidth()
+                                    .offset(y = latinIME.sizingCalculator.calculateSuggestionBarHeightDp().dp)) {
+                                    org.futo.inputmethod.latin.uix.alex.NextWordRow(keyboardManagerForAction)
+                                }
+                            }
                         }
                         latinIME.LegacyKeyboardView(modifier = Modifier
                             .align(Alignment.BottomCenter)
