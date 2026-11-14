@@ -4,6 +4,7 @@
 
 #include <cstring> // for memset()
 #include <vector>
+#include <cmath>
 
 #include "jni.h"
 #include "jni_common.h"
@@ -986,6 +987,94 @@ namespace latinime {
         env->ReleaseIntArrayElements(outScores, outArray, 0);
     }
 
+    // alex: log-verovatnoca cele reci (svaki kandidat posebno) posle konteksta, za swipe.
+    // Kontekst se dekodira jednom (sa kesom), a ostatak tokena svih kandidata u jednom batch-u,
+    // svaki kandidat u svojoj sekvenci (kopija KV kesa sekvence 0).
+    static float log_softmax_at(const float *logits, size_t n_vocab, int token) {
+        float mx = -INFINITY;
+        for(size_t i = 0; i < n_vocab; i++) if(logits[i] > mx) mx = logits[i];
+        double sum = 0.0;
+        for(size_t i = 0; i < n_vocab; i++) sum += std::exp((double)(logits[i] - mx));
+        return logits[token] - mx - (float)std::log(sum);
+    }
+
+    // (JLjava/lang/String;[Ljava/lang/String;[F)V
+    static void xlm_LanguageModel_scoreWords(JNIEnv *env, jclass clazz,
+        jlong dict,
+        jstring context,
+        jobjectArray inWords,
+        jfloatArray outLogProbs
+    ) {
+        GGML_UNUSED(clazz);
+        auto *state = reinterpret_cast<LanguageModelState *>(dict);
+        llama_context *ctx = state->model->context();
+        size_t n_vocab = llama_n_vocab(llama_get_model(ctx));
+
+        jsize numWords = env->GetArrayLength(inWords);
+        if(numWords > 16) numWords = 16;
+        std::vector<float> out((size_t)numWords, -100.0f);
+
+        std::vector<token_sequence> tokens((size_t)numWords);
+        for(jsize i = 0; i < numWords; i++) {
+            auto jstr = (jstring)env->GetObjectArrayElement(inWords, i);
+            tokens[i] = state->model->tokenize(trim(jstring2string(env, jstr)) + " ");
+            if(tokens[i].size() > 12) tokens[i].resize(12);
+            env->DeleteLocalRef(jstr);
+        }
+
+        token_sequence prompt = state->model->tokenize(trim(jstring2string(env, context)) + " ");
+        prompt.insert(prompt.begin(), 1); // BOS
+
+        auto dr = state->DecodePromptAndMixes(prompt, { });
+        if(dr.size == 0) {
+            env->SetFloatArrayRegion(outLogProbs, 0, numWords, out.data());
+            return;
+        }
+
+        const float *first = llama_get_logits_ith(ctx, dr.logits_head);
+        for(jsize i = 0; i < numWords; i++) {
+            if(tokens[i].empty()) continue;
+            out[i] = log_softmax_at(first, n_vocab, tokens[i][0]);
+        }
+
+        llama_batch batch = state->model->adapter->batch;
+        batch.n_tokens = 0;
+        std::vector<std::pair<int, int>> where; // (kandidat, indeks tokena cija se verovatnoca cita)
+        for(jsize i = 0; i < numWords; i++) {
+            if(tokens[i].size() < 2) continue;
+            llama_seq_id seq = (llama_seq_id)(i + 1);
+            llama_kv_cache_seq_rm(ctx, seq, -1, -1);
+            llama_kv_cache_seq_cp(ctx, 0, seq, 0, dr.size);
+            for(size_t j = 0; j + 1 < tokens[i].size(); j++) {
+                int k = batch.n_tokens;
+                batch.token[k] = tokens[i][j];
+                batch.pos[k] = (llama_pos)(dr.size + j);
+                batch.seq_id[k][0] = seq;
+                batch.n_seq_id[k] = 1;
+                batch.logits[k] = true;
+                batch.n_tokens += 1;
+                where.emplace_back((int)i, (int)(j + 1));
+            }
+        }
+
+        if(batch.n_tokens > 0 && batch.n_tokens <= state->model->adapter->n_batch) {
+            if(llama_decode(ctx, batch) == 0) {
+                for(size_t k = 0; k < where.size(); k++) {
+                    const float *lg = llama_get_logits_ith(ctx, (int)k);
+                    out[where[k].first] += log_softmax_at(lg, n_vocab, tokens[where[k].first][where[k].second]);
+                }
+            } else {
+                AKLOGE("scoreWords: llama_decode() failed");
+            }
+        }
+
+        for(jsize i = 0; i < numWords; i++) {
+            llama_kv_cache_seq_rm(ctx, (llama_seq_id)(i + 1), -1, -1);
+        }
+
+        env->SetFloatArrayRegion(outLogProbs, 0, numWords, out.data());
+    }
+
     static void xlm_LanguageModel_getSuggestions(JNIEnv *env, jclass clazz,
          // inputs
          jlong dict,
@@ -1285,6 +1374,11 @@ namespace latinime {
                     const_cast<char *>("rescoreSuggestionsNative"),
                     const_cast<char *>("(JLjava/lang/String;[Ljava/lang/String;[I[I)V"),
                     reinterpret_cast<void *>(xlm_LanguageModel_rescoreSuggestions)
+            },
+            {
+                    const_cast<char *>("scoreWordsNative"),
+                    const_cast<char *>("(JLjava/lang/String;[Ljava/lang/String;[F)V"),
+                    reinterpret_cast<void *>(xlm_LanguageModel_scoreWords)
             }
     };
 

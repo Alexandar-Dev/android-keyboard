@@ -1,3 +1,7 @@
+> **Izmenjena verzija (fork Alexandar-Dev, grana `swipe-transformer`).** Ovo nije zvanični FUTO build.
+> Izmena: swipe kandidate iz rečnika ponovo rangira transformer model (verovatnoća reči u kontekstu).
+> Lična, nekomercijalna upotreba po FUTO Source First License.
+
 # FUTO Keyboard
 
 The goal is to make a good modern keyboard that stays offline and doesn't spy on you. This keyboard is a fork of [LatinIME, The Android Open-Source Keyboard](https://android.googlesource.com/platform/packages/inputmethods/LatinIME), with significant changes made to it.

@@ -1,0 +1,54 @@
+name: Build FUTO alex (swipe + transformer)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+          fetch-depth: 0
+
+      - name: LFS u submodulima
+        run: git submodule foreach --recursive 'git lfs pull || true'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: NDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;28.2.13676358" "build-tools;35.0.0" "platforms;android-35" > /dev/null
+
+      - name: Build
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: alex-${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleUnstableRelease -s --no-daemon
+          mkdir -p out
+          cp build/outputs/apk/unstable/release/*.apk out/futo-alex-${{ github.run_number }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: futo-alex-${{ github.run_number }}
+          path: out/*.apk
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "futo-alex-${{ github.run_number }}" out/*.apk \
+            --target "${{ github.sha }}" \
+            --title "FUTO alex ${{ github.run_number }}" \
+            --notes "Licni build FUTO tastature (izmenjen: swipe kandidate rangira transformer). FUTO Source First License, nekomercijalno." \
+            --prerelease

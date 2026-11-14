@@ -350,6 +350,21 @@ class LanguageModel(
         return@withContext getSuggestionsInternal(proximityInfoHandle, context, composeInfo, autocorrectThreshold, bannedWords)
     }
 
+    // alex: log-verovatnoca svake reci (swipe kandidati) posle konteksta
+    suspend fun scoreWords(
+        ngramContext: NgramContext,
+        words: List<String>
+    ): FloatArray? = withContext(LanguageModelScope) {
+        if(!loadModelIfNeeded()) return@withContext null
+        if(words.isEmpty()) return@withContext null
+        val composeInfo = ComposeInfo(partialWord = "", xCoords = IntArray(0), yCoords = IntArray(0), inputMode = 0)
+        val context = safeguardContext(getContext(composeInfo, ngramContext))
+        val n = words.size.coerceAtMost(16)
+        val out = FloatArray(n)
+        scoreWordsNative(mNativeState, context, words.take(n).toTypedArray(), out)
+        return@withContext out
+    }
+
     suspend fun closeInternalLocked() = withContext(LanguageModelScope) {
         if (mNativeState != 0L) {
             closeNative(mNativeState)
@@ -382,5 +397,12 @@ class LanguageModel(
         inSuggestedScores: IntArray,
 
         outSuggestedScores: IntArray
+    )
+
+    private external fun scoreWordsNative(
+        state: Long,
+        context: String,
+        inWords: Array<String>,
+        outLogProbs: FloatArray
     )
 }

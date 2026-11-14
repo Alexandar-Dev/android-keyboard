@@ -5,6 +5,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.HapticFeedbackConstants
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -498,6 +499,19 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 inputStyle,
                 sequenceNumber
             ) { suggestedWords -> dictResult = suggestedWords }
+
+            // alex: swipe kandidate ponovo rangira transformer (ako stigne na vreme)
+            val swiped = dictResult
+            if(inputStyle == SuggestedWords.INPUT_STYLE_TAIL_BATCH && swiped != null) {
+                val rescored = try {
+                    withTimeoutOrNull(250L) { languageModelFacilitator.rescoreSwipe(swiped) }
+                } catch(e: Exception) {
+                    if(e is CancellationException) throw e
+                    Log.e(TAG, "swipe rescore failed", e)
+                    null
+                }
+                if(rescored != null) dictResult = rescored
+            }
         }
 
         when {

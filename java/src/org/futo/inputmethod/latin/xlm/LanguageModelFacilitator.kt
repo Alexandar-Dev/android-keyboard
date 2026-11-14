@@ -126,6 +126,12 @@ private fun levenshteinDistance(s1: String, s2: String): Int {
     return dist[len1][len2]
 }
 
+
+// alex: podesavanje swipe + transformer
+private const val SWIPE_RESCORE_TOP_N = 8
+private const val SWIPE_LM_WEIGHT = 0.5f      // koliko model utice u odnosu na swipe
+private const val SWIPE_LM_SPAN_NATS = 8.0f   // razlika log-verovatnoce koja daje punu kaznu
+
 public class LanguageModelFacilitator(
     val context: Context,
     val inputLogic: InputLogic,
@@ -169,7 +175,8 @@ public class LanguageModelFacilitator(
     }
 
     private var skipLanguage: String? = null
-    private suspend fun runLanguageModel(values: PredictionInputValues): ArrayList<SuggestedWordInfo>? {
+    // alex: izdvojeno ucitavanje modela da ga koristi i swipe
+    private suspend fun prepareLanguageModel(): LanguageModel? {
         if(transformerDisabled) return null
 
         val locale = dictionaryFacilitator.primaryLocale ?: return null
@@ -192,6 +199,11 @@ public class LanguageModelFacilitator(
         }
 
         if(dictionaryFacilitator.mostConfidentLocale != languageModel?.locale) return null
+        return languageModel
+    }
+
+    private suspend fun runLanguageModel(values: PredictionInputValues): ArrayList<SuggestedWordInfo>? {
+        if(prepareLanguageModel() == null) return null
 
         val keyboard = keyboardSwitcher.keyboard ?: return null
 
@@ -399,6 +411,48 @@ public class LanguageModelFacilitator(
 
 
         return suggestedWords
+    }
+
+    // alex: swipe kandidate iz recnika ponovo rangira transformer (verovatnoca reci u kontekstu).
+    // Konacna ocena = ocena swipe-a (0..1 unutar prvih N) + tezina * ocena modela (-1..0).
+    suspend fun rescoreSwipe(dict: SuggestedWords): SuggestedWords? {
+        if(shouldPassThroughToLegacy()) return null
+        val list = dict.mSuggestedWordInfoList
+        if(list.size < 2) return null
+        val lm = try { prepareLanguageModel() } catch(e: ModelLoadingException) { null } ?: return null
+
+        val ngramContext = inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
+            settings.current.mSpacingAndPunctuations, 2
+        )
+        val top = list.take(SWIPE_RESCORE_TOP_N)
+        val lp = lm.scoreWords(ngramContext, top.map { it.mWord }) ?: return null
+        if(lp.size != top.size) return null
+
+        val sMax = top.maxOf { it.mScore }
+        val sMin = top.minOf { it.mScore }
+        val spread = (sMax - sMin).coerceAtLeast(1).toFloat()
+        val lpMax = lp.max()
+
+        val reranked = top.mapIndexed { i, w ->
+            val d = (w.mScore - sMin) / spread
+            val l = ((lp[i] - lpMax) / SWIPE_LM_SPAN_NATS).coerceAtLeast(-1.0f)
+            if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> ${d + SWIPE_LM_WEIGHT * l}")
+            w to (d + SWIPE_LM_WEIGHT * l)
+        }.sortedByDescending { it.second }.map { it.first }
+
+        if(reranked.first() == top.first() && reranked == top) return null
+
+        val newList = ArrayList<SuggestedWordInfo>(reranked + list.drop(top.size))
+        return SuggestedWords(
+            newList,
+            dict.mRawSuggestions,
+            newList[0],
+            true,
+            false,
+            false,
+            dict.mInputStyle,
+            dict.mSequenceNumber
+        )
     }
 
     public suspend fun destroyModel() {
