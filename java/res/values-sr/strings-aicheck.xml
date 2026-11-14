@@ -41,4 +41,6 @@
     <string name="ai_translate_title">Prevedi na engleski</string>
     <string name="ai_translate_loading">Claude prevodi…</string>
     <string name="ai_translate_replace">Zameni</string>
+    <string name="alex_suggestion_indicators">Oznake ispod predloga</string>
+    <string name="alex_suggestion_indicators_subtitle">Talasasta linija = od swipe-a, ravna = od transformera</string>
 </resources>

@@ -50,6 +50,12 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
         )
 
         SettingToggleDataStore(
+            title = stringResource(R.string.alex_suggestion_indicators),
+            subtitle = stringResource(R.string.alex_suggestion_indicators_subtitle),
+            setting = org.futo.inputmethod.latin.uix.alex.ShowSuggestionIndicatorsSetting
+        )
+
+        SettingToggleDataStore(
             title = stringResource(R.string.alex_scrollable_suggestions),
             subtitle = stringResource(R.string.alex_scrollable_suggestions_subtitle),
             setting = UseExpandableSuggestionsForGeneralIME

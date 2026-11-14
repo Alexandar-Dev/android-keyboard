@@ -305,7 +305,9 @@ fun RowScope.SuggestionItem(words: SuggestedWords, idx: Int, isPrimary: Boolean,
         else -> LocalKeyboardScheme.current.onSurfaceVariant
     }
 
+    val alexShowInd = useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowSuggestionIndicatorsSetting)
     val iconToUse = when {
+        !alexShowInd -> null
         wordInfo?.mOriginatesFromTransformerLM == true -> painterResource(id = R.drawable.transformer_suggestion)
         wordInfo?.mOriginatesFromSwipeModel    == true -> painterResource(id = R.drawable.swipemodel_indicator)
         else -> null
@@ -1086,7 +1088,9 @@ private fun CandidateItem(modifier: Modifier, it: SuggestedWordInfo, listener: S
     val descTextStyle =
         suggestionStyleCandidateDescription.copy(color = color.copy(alpha = 0.5f)).withCustomFont() // TODO: High contrast for high contrast theme
     // alex: oznake kao u obicnom redu (talasasta = swipe model, ravna = transformer)
+    val alexShowInd = useDataStoreValue(org.futo.inputmethod.latin.uix.alex.ShowSuggestionIndicatorsSetting)
     val alexIcon = when {
+        !alexShowInd -> null
         it.mOriginatesFromTransformerLM -> painterResource(id = R.drawable.transformer_suggestion)
         it.mOriginatesFromSwipeModel -> painterResource(id = R.drawable.swipemodel_indicator)
         else -> null

@@ -41,4 +41,6 @@
     <string name="ai_translate_title">Translate to English</string>
     <string name="ai_translate_loading">Claude is translating…</string>
     <string name="ai_translate_replace">Replace</string>
+    <string name="alex_suggestion_indicators">Lines under suggestions</string>
+    <string name="alex_suggestion_indicators_subtitle">Wavy line = from swipe, flat line = from the transformer</string>
 </resources>
