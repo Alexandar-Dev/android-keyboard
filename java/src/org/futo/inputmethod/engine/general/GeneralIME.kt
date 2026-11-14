@@ -6,6 +6,8 @@ import android.util.Log
 import android.view.HapticFeedbackConstants
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import kotlinx.coroutines.CancellationException
+import org.futo.inputmethod.latin.uix.alex.NextWordRowState
+import org.futo.inputmethod.latin.uix.alex.ShowNextWordRowSetting
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -211,6 +213,17 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
 
     override fun onCreate() {
         languageModelFacilitator.launchProcessor()
+
+        // alex: red za sledecu rec trazi predloge preko transformera
+        NextWordRowState.requester = { before ->
+            helper.lifecycleScope.launch(languageModelFacilitator.languageModelScope) {
+                val words = try { languageModelFacilitator.predictNextWords(before, null) } catch(e: Exception) {
+                    if(e is CancellationException) throw e
+                    emptyList()
+                }
+                NextWordRowState.words.value = words
+            }
+        }
         if (context.isDirectBootUnlocked) onDeviceUnlocked()
 
         suggestionBlacklist.init()
@@ -511,6 +524,18 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                     null
                 }
                 if(rescored != null) dictResult = rescored
+
+                // alex: red za sledecu rec (ako je ukljucen)
+                val topWord = dictResult?.mSuggestedWordInfoList?.firstOrNull()?.mWord
+                if(topWord != null && context.getSetting(ShowNextWordRowSetting)) {
+                    helper.lifecycleScope.launch(languageModelFacilitator.languageModelScope) {
+                        val words = try { languageModelFacilitator.predictNextWords(null, topWord) } catch(e: Exception) {
+                            if(e is CancellationException) throw e
+                            emptyList()
+                        }
+                        NextWordRowState.words.value = words
+                    }
+                }
             }
         }
 
@@ -550,6 +575,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
     private var timeTakenToUpdate = 40L
     fun updateSuggestions(inputStyle: Int) {
         updateSuggestionJob?.cancel()
+        if(inputStyle == SuggestedWords.INPUT_STYLE_TYPING) NextWordRowState.clear() // alex
 
         val isSwipe = inputStyle == SuggestedWords.INPUT_STYLE_TAIL_BATCH
                 || inputStyle == SuggestedWords.INPUT_STYLE_UPDATE_BATCH

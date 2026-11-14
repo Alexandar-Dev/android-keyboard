@@ -34,4 +34,8 @@
     <string name="alex_swipe_lm_weight_off">isključeno</string>
     <string name="alex_transformer_non_qwerty">Transformer i za ne-QWERTY rasporede</string>
     <string name="alex_transformer_non_qwerty_subtitle">Potrebno za srpski QWERTZ (sa š, đ, č, ć, ž)</string>
+    <string name="alex_next_word_row">Red za sledeću reč posle swipe-a</string>
+    <string name="alex_next_word_row_subtitle">Dodatni red ispod predloga koji nudi sledeću reč prema rečenici (transformer). Tastatura je malo viša.</string>
+    <string name="alex_scrollable_suggestions">Klizni red predloga</string>
+    <string name="alex_scrollable_suggestions_subtitle">Prevuci predloge ulevo da vidiš još izbora. Važi od sledećeg otvaranja tastature.</string>
 </resources>

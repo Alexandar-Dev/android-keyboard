@@ -350,6 +350,27 @@ class LanguageModel(
         return@withContext getSuggestionsInternal(proximityInfoHandle, context, composeInfo, autocorrectThreshold, bannedWords)
     }
 
+    // alex: predlog sledece reci (posle swipe-a ili posle klika u redu za sledecu rec)
+    suspend fun predictNextWords(
+        ngramContext: NgramContext?,
+        rawContext: String?,
+        lastWord: String?,
+        proximityInfoHandle: Long
+    ): List<String> = withContext(LanguageModelScope) {
+        if(!loadModelIfNeeded()) return@withContext emptyList()
+        val composeInfo = ComposeInfo(partialWord = "", xCoords = IntArray(0), yCoords = IntArray(0), inputMode = 0)
+        var context = rawContext?.let { it.substring(it.lastIndexOf('\n') + 1) }
+            ?: ngramContext?.let { getContext(composeInfo, it) }
+            ?: return@withContext emptyList()
+        if(!lastWord.isNullOrBlank()) context = context.trimEnd() + " " + lastWord.trim()
+        context = safeguardContext(context.trim())
+        return@withContext getSuggestionsInternal(proximityInfoHandle, context, composeInfo, 0.0f, arrayOf())
+            .map { it.mWord.trim() }
+            .filter { w -> w.isNotEmpty() && w.any { it.isLetter() } }
+            .distinct()
+            .take(3)
+    }
+
     // alex: log-verovatnoca svake reci (swipe kandidati) posle konteksta
     suspend fun scoreWords(
         ngramContext: NgramContext,

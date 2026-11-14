@@ -34,4 +34,8 @@
     <string name="alex_swipe_lm_weight_off">off</string>
     <string name="alex_transformer_non_qwerty">Transformer on non-QWERTY layouts</string>
     <string name="alex_transformer_non_qwerty_subtitle">Needed for Serbian QWERTZ (with š, đ, č, ć, ž)</string>
+    <string name="alex_next_word_row">Next-word row after swipe</string>
+    <string name="alex_next_word_row_subtitle">An extra row under the suggestions that predicts the next word from the sentence (transformer). The keyboard gets a bit taller.</string>
+    <string name="alex_scrollable_suggestions">Scrollable suggestion bar</string>
+    <string name="alex_scrollable_suggestions_subtitle">Swipe the suggestions left to see more choices. Takes effect when you open the keyboard again.</string>
 </resources>

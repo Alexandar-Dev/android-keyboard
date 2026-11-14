@@ -747,6 +747,9 @@ class UixManager(private val latinIME: LatinIME) {
                     loading = latinIME.imeManager.isImeLoading()
                 )
             }
+
+            // alex: red za sledecu rec posle swipe-a
+            org.futo.inputmethod.latin.uix.alex.NextWordRow(keyboardManagerForAction)
         }
     }
 

@@ -17,6 +17,8 @@ import org.futo.inputmethod.latin.xlm.BinaryDictTransformerWeightSetting
 import org.futo.inputmethod.latin.xlm.SwipeLmWeightSetting
 import org.futo.inputmethod.latin.xlm.AllowTransformerOnNonQWERTYLayouts
 import org.futo.inputmethod.latin.uix.settings.SettingToggleDataStore
+import org.futo.inputmethod.latin.uix.alex.ShowNextWordRowSetting
+import org.futo.inputmethod.engine.general.UseExpandableSuggestionsForGeneralIME
 
 @Preview
 @Composable
@@ -39,6 +41,18 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
                 else String.format("%.2f", it)
             },
             steps = 19
+        )
+
+        SettingToggleDataStore(
+            title = stringResource(R.string.alex_next_word_row),
+            subtitle = stringResource(R.string.alex_next_word_row_subtitle),
+            setting = ShowNextWordRowSetting
+        )
+
+        SettingToggleDataStore(
+            title = stringResource(R.string.alex_scrollable_suggestions),
+            subtitle = stringResource(R.string.alex_scrollable_suggestions_subtitle),
+            setting = UseExpandableSuggestionsForGeneralIME
         )
 
         SettingToggleDataStore(

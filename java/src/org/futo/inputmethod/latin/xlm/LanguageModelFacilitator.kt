@@ -420,6 +420,17 @@ public class LanguageModelFacilitator(
         return suggestedWords
     }
 
+    // alex: predlozi sledece reci za red ispod predloga
+    suspend fun predictNextWords(rawContext: String?, afterWord: String?): List<String> {
+        if(shouldPassThroughToLegacy()) return emptyList()
+        val lm = try { prepareLanguageModel() } catch(e: ModelLoadingException) { null } ?: return emptyList()
+        val prox = keyboardSwitcher.keyboard?.proximityInfo?.nativeProximityInfo ?: return emptyList()
+        val ngram = if(rawContext == null) inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
+            settings.current.mSpacingAndPunctuations, 2
+        ) else null
+        return lm.predictNextWords(ngram, rawContext, afterWord, prox)
+    }
+
     // alex: swipe kandidate iz recnika ponovo rangira transformer (verovatnoca reci u kontekstu).
     // Konacna ocena = ocena swipe-a (0..1 unutar prvih N) + tezina * ocena modela (-1..0).
     suspend fun rescoreSwipe(dict: SuggestedWords): SuggestedWords? {
