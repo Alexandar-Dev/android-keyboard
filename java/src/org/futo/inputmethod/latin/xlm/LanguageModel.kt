@@ -368,7 +368,7 @@ class LanguageModel(
             .map { it.mWord.trim() }
             .filter { w -> w.isNotEmpty() && w.any { it.isLetter() } }
             .distinct()
-            .take(3)
+            .take(org.futo.inputmethod.latin.uix.alex.NEXT_WORD_ROW_MAX)
     }
 
     // alex: log-verovatnoca svake reci (swipe kandidati) posle konteksta
