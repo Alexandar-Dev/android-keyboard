@@ -14,6 +14,9 @@ import org.futo.inputmethod.latin.uix.settings.SettingSlider
 import org.futo.inputmethod.latin.uix.settings.Tip
 import org.futo.inputmethod.latin.xlm.AutocorrectThresholdSetting
 import org.futo.inputmethod.latin.xlm.BinaryDictTransformerWeightSetting
+import org.futo.inputmethod.latin.xlm.SwipeLmWeightSetting
+import org.futo.inputmethod.latin.xlm.AllowTransformerOnNonQWERTYLayouts
+import org.futo.inputmethod.latin.uix.settings.SettingToggleDataStore
 
 @Preview
 @Composable
@@ -23,6 +26,26 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
         ScreenTitle(stringResource(R.string.prediction_settings_transformer_advanced_params), showBack = true, navController)
 
         Tip(stringResource(R.string.prediction_settings_transformer_advanced_params_experimental_notice))
+
+        // alex: jacina transformera kod swipe-a
+        SettingSlider(
+            title = stringResource(R.string.alex_swipe_lm_weight),
+            subtitle = stringResource(R.string.alex_swipe_lm_weight_subtitle),
+            setting = SwipeLmWeightSetting,
+            range = 0.0f .. 1.0f,
+            transform = { it },
+            indicator = {
+                if(it <= 0.01f) resources.getString(R.string.alex_swipe_lm_weight_off)
+                else String.format("%.2f", it)
+            },
+            steps = 19
+        )
+
+        SettingToggleDataStore(
+            title = stringResource(R.string.alex_transformer_non_qwerty),
+            subtitle = stringResource(R.string.alex_transformer_non_qwerty_subtitle),
+            setting = AllowTransformerOnNonQWERTYLayouts
+        )
 
         SettingSlider(
             title = stringResource(R.string.prediction_settings_transformer_advanced_params_transformer_lm_strength),

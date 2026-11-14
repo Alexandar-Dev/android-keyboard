@@ -44,9 +44,16 @@ val BinaryDictTransformerWeightSetting = SettingsKey(
     3.4f
 )
 
+// alex: srpski QWERTZ (sa š đ č ć ž) nije "qwerty", pa je transformer za kucanje bio iskljucen
 val AllowTransformerOnNonQWERTYLayouts = SettingsKey(
     booleanPreferencesKey("allow_transformer_lm_on_non_qwerty"),
-    false
+    true
+)
+
+// alex: koliko transformer utice na redosled swipe kandidata (0 = iskljuceno)
+val SwipeLmWeightSetting = SettingsKey(
+    floatPreferencesKey("alex_swipe_lm_weight"),
+    0.3f
 )
 
 internal fun SuggestedWordInfo.add(other: SuggestedWordInfo): SuggestedWordInfo {
@@ -129,7 +136,6 @@ private fun levenshteinDistance(s1: String, s2: String): Int {
 
 // alex: podesavanje swipe + transformer
 private const val SWIPE_RESCORE_TOP_N = 8
-private const val SWIPE_LM_WEIGHT = 0.3f      // koliko model utice u odnosu na swipe
 private const val SWIPE_LM_SPAN_NATS = 10.0f  // razlika log-verovatnoce koja daje punu kaznu
 
 public class LanguageModelFacilitator(
@@ -420,6 +426,8 @@ public class LanguageModelFacilitator(
         if(shouldPassThroughToLegacy()) return null
         val list = dict.mSuggestedWordInfoList
         if(list.size < 2) return null
+        val weight = context.getSetting(SwipeLmWeightSetting)
+        if(weight <= 0.01f) return null
         val lm = try { prepareLanguageModel() } catch(e: ModelLoadingException) { null } ?: return null
 
         val ngramContext = inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
@@ -437,8 +445,8 @@ public class LanguageModelFacilitator(
         val reranked = top.mapIndexed { i, w ->
             val d = (w.mScore - sMin) / spread
             val l = ((lp[i] - lpMax) / SWIPE_LM_SPAN_NATS).coerceAtLeast(-1.0f)
-            if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> ${d + SWIPE_LM_WEIGHT * l}")
-            w to (d + SWIPE_LM_WEIGHT * l)
+            if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> ${d + weight * l}")
+            w to (d + weight * l)
         }.sortedByDescending { it.second }.map { it.first }
 
         if(reranked.first() == top.first() && reranked == top) return null
