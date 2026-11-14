@@ -129,8 +129,8 @@ private fun levenshteinDistance(s1: String, s2: String): Int {
 
 // alex: podesavanje swipe + transformer
 private const val SWIPE_RESCORE_TOP_N = 8
-private const val SWIPE_LM_WEIGHT = 0.5f      // koliko model utice u odnosu na swipe
-private const val SWIPE_LM_SPAN_NATS = 8.0f   // razlika log-verovatnoce koja daje punu kaznu
+private const val SWIPE_LM_WEIGHT = 0.3f      // koliko model utice u odnosu na swipe
+private const val SWIPE_LM_SPAN_NATS = 10.0f  // razlika log-verovatnoce koja daje punu kaznu
 
 public class LanguageModelFacilitator(
     val context: Context,
