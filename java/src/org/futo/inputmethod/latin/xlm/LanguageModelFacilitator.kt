@@ -137,6 +137,12 @@ private fun levenshteinDistance(s1: String, s2: String): Int {
 // alex: podesavanje swipe + transformer
 private const val SWIPE_RESCORE_TOP_N = 8
 private const val SWIPE_LM_SPAN_NATS = 10.0f  // razlika log-verovatnoce koja daje punu kaznu
+// alex: reci koje predvidi transformer, a odgovaraju putanji swipe-a
+private const val SWIPE_PREDICTED_MAX = 4
+private const val SWIPE_PREDICTED_FIT = 0.8f  // ocena swipe-a za takvu rec (najbolji swipe kandidat = 1.0)
+private const val SWIPE_FIT_START = 1.1f      // udaljenost u sirinama tastera: pocetak putanje do prvog slova
+private const val SWIPE_FIT_END = 0.8f        // kraj putanje do poslednjeg slova (strozije: je/jer)
+private const val SWIPE_FIT_MID = 0.7f        // putanja mora proci blizu svakog slova izmedju
 
 public class LanguageModelFacilitator(
     val context: Context,
@@ -436,25 +442,43 @@ public class LanguageModelFacilitator(
     suspend fun rescoreSwipe(dict: SuggestedWords): SuggestedWords? {
         if(shouldPassThroughToLegacy()) return null
         val list = dict.mSuggestedWordInfoList
-        if(list.size < 2) return null
+        if(list.isEmpty()) return null
         val weight = context.getSetting(SwipeLmWeightSetting)
         if(weight <= 0.01f) return null
+        // putanju uzeti odmah, dok je composer jos drzi
+        val path = currentSwipePath()
         val lm = try { prepareLanguageModel() } catch(e: ModelLoadingException) { null } ?: return null
 
         val ngramContext = inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
             settings.current.mSpacingAndPunctuations, 2
         )
-        val top = list.take(SWIPE_RESCORE_TOP_N)
+        val top0 = list.take(SWIPE_RESCORE_TOP_N)
+
+        // alex: reci koje transformer ocekuje, a putanja im odgovara, dodaju se medju kandidate
+        val extra = if(path == null) emptyList() else try {
+            predictedSwipeWords(lm, ngramContext, path, top0.map { it.mWord.lowercase() }.toSet())
+        } catch(e: Exception) {
+            if(e is CancellationException) throw e
+            Log.e(TAG, "predicted swipe words failed", e)
+            emptyList()
+        }
+        val first = top0.first()
+        val top = top0 + extra.map {
+            SuggestedWordInfo(it, "", first.mScore, SuggestedWordInfo.KIND_CORRECTION, first.mSourceDict,
+                SuggestedWordInfo.NOT_AN_INDEX, SuggestedWordInfo.NOT_A_CONFIDENCE)
+        }
+        if(top.size < 2) return null
+
         val lp = lm.scoreWords(ngramContext, top.map { it.mWord }) ?: return null
         if(lp.size != top.size) return null
 
-        val sMax = top.maxOf { it.mScore }
-        val sMin = top.minOf { it.mScore }
+        val sMax = top0.maxOf { it.mScore }
+        val sMin = top0.minOf { it.mScore }
         val spread = (sMax - sMin).coerceAtLeast(1).toFloat()
         val lpMax = lp.max()
 
         val reranked = top.mapIndexed { i, w ->
-            val d = (w.mScore - sMin) / spread
+            val d = if(i >= top0.size) SWIPE_PREDICTED_FIT else (w.mScore - sMin) / spread
             val l = ((lp[i] - lpMax) / SWIPE_LM_SPAN_NATS).coerceAtLeast(-1.0f)
             if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> ${d + weight * l}")
             w to (d + weight * l)
@@ -462,7 +486,7 @@ public class LanguageModelFacilitator(
 
         if(reranked.first() == top.first() && reranked == top) return null
 
-        val newList = ArrayList<SuggestedWordInfo>(reranked + list.drop(top.size))
+        val newList = ArrayList<SuggestedWordInfo>(reranked + list.drop(top0.size))
         return SuggestedWords(
             newList,
             dict.mRawSuggestions,
@@ -473,6 +497,72 @@ public class LanguageModelFacilitator(
             dict.mInputStyle,
             dict.mSequenceNumber
         )
+    }
+
+    private class SwipePath(val xs: IntArray, val ys: IntArray, val n: Int)
+
+    private fun currentSwipePath(): SwipePath? {
+        val ptrs = inputLogic.mWordComposer.inputPointers ?: return null
+        val n = ptrs.pointerSize
+        if(n < 2) return null
+        return SwipePath(ptrs.xCoordinates.copyOf(n), ptrs.yCoordinates.copyOf(n), n)
+    }
+
+    // alex: reci koje transformer ocekuje posle konteksta, a putanja swipe-a im odgovara
+    // (pocetak, kraj i sva slova redom blizu putanje). Tako swipe nadje "što" i kad krene sa "p".
+    private suspend fun predictedSwipeWords(
+        lm: LanguageModel, ngram: NgramContext, path: SwipePath, have: Set<String>
+    ): List<String> {
+        val kb = keyboardSwitcher.keyboard ?: return emptyList()
+        val prox = kb.proximityInfo?.nativeProximityInfo ?: return emptyList()
+        val predicted = lm.predictNextWords(ngram, null, null, prox)
+        return predicted.filter { w ->
+            w.length >= 2 && w.lowercase() !in have
+                && dictionaryFacilitator.isValidSuggestionWord(w)
+                && fitsSwipePath(kb, w, path)
+        }.take(SWIPE_PREDICTED_MAX)
+    }
+
+    private fun keyCenter(kb: Keyboard, c: Int): FloatArray? {
+        var key = kb.getKey(c) ?: kb.getKey(Character.toUpperCase(c))
+        if(key == null) {
+            // slovo sa kvacicom bez svog tastera -> osnovno slovo (š -> s, đ -> d)
+            val base = if(c == 'đ'.code) 'd'.code else java.text.Normalizer
+                .normalize(String(Character.toChars(c)), java.text.Normalizer.Form.NFD)[0].code
+            key = kb.getKey(base)
+        }
+        key ?: return null
+        return floatArrayOf(key.x + key.width / 2f, key.y + key.height / 2f)
+    }
+
+    private fun fitsSwipePath(kb: Keyboard, word: String, p: SwipePath): Boolean {
+        val kw = kb.mMostCommonKeyWidth.toFloat().coerceAtLeast(1f)
+        val kh = kb.mMostCommonKeyHeight.toFloat().coerceAtLeast(1f)
+        val centers = ArrayList<FloatArray>()
+        val s = word.lowercase()
+        var i = 0
+        var prev = -1
+        while(i < s.length) {
+            val cp = s.codePointAt(i)
+            i += Character.charCount(cp)
+            if(!Character.isLetter(cp) || cp == prev) continue // dupla slova swipe ne vidi
+            prev = cp
+            centers.add(keyCenter(kb, cp) ?: return false)
+        }
+        if(centers.size < 2) return false
+        fun dist(j: Int, c: FloatArray): Float {
+            val dx = (p.xs[j] - c[0]) / kw
+            val dy = (p.ys[j] - c[1]) / kh
+            return kotlin.math.sqrt(dx * dx + dy * dy)
+        }
+        if(dist(0, centers.first()) > SWIPE_FIT_START) return false
+        if(dist(p.n - 1, centers.last()) > SWIPE_FIT_END) return false
+        var j = 0
+        for(k in 1 until centers.size - 1) {
+            while(j < p.n && dist(j, centers[k]) > SWIPE_FIT_MID) j++
+            if(j >= p.n) return false
+        }
+        return true
     }
 
     public suspend fun destroyModel() {

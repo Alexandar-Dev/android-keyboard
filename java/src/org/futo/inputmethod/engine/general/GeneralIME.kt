@@ -518,7 +518,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             val swiped = dictResult
             if(inputStyle == SuggestedWords.INPUT_STYLE_TAIL_BATCH && swiped != null) {
                 val rescored = try {
-                    withTimeoutOrNull(250L) { languageModelFacilitator.rescoreSwipe(swiped) }
+                    withTimeoutOrNull(400L) { languageModelFacilitator.rescoreSwipe(swiped) }
                 } catch(e: Exception) {
                     if(e is CancellationException) throw e
                     Log.e(TAG, "swipe rescore failed", e)
