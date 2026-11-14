@@ -49,6 +49,9 @@ val NEXT_WORD_ROW_HEIGHT = 40.dp
 object NextWordRowState {
     val words = mutableStateOf<List<String>>(emptyList())
 
+    // reci koje vec stoje u gornjem redu (ne ponavljaju se dole)
+    val topWords = mutableStateOf<Set<String>>(emptySet())
+
     // Postavlja GeneralIME: trazi predloge za dati tekst pre kursora
     @Volatile var requester: ((String) -> Unit)? = null
 
@@ -61,7 +64,8 @@ object NextWordRowState {
 fun NextWordRow(manager: KeyboardManagerForAction) {
     if (!useDataStoreValue(ShowNextWordRowSetting)) return
     val view = LocalView.current
-    val words = NextWordRowState.words.value
+    val top = NextWordRowState.topWords.value
+    val words = NextWordRowState.words.value.filter { it.lowercase() !in top }
     val sepColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
     val textColor = MaterialTheme.colorScheme.onSurface
     val lineIcon = painterResource(id = R.drawable.transformer_suggestion)

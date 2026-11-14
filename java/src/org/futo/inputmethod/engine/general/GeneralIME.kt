@@ -823,6 +823,8 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
 
     override fun showSuggestionStrip(words: SuggestedWords?) {
         inputLogic.setSuggestedWords(words)
+        // alex: reci iz gornjeg reda, da ih donji red ne ponavlja
+        NextWordRowState.topWords.value = words?.mSuggestedWordInfoList?.map { it.mWord.lowercase() }?.toSet() ?: emptySet()
 
         if(settings.current.isSuggestionsEnabledPerUserSettings) {
             helper.showSuggestionStrip(words, expandableCfg)
