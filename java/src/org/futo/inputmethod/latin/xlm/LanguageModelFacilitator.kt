@@ -175,6 +175,7 @@ public class LanguageModelFacilitator(
 
     private var numConsecutiveTimeouts = 0
     private var transformerDisabled = false
+    @Volatile private var timeoutPauseUntil = 0L
 
     fun reportTimeout() {
         if(shouldPassThroughToLegacy()) return
@@ -182,7 +183,9 @@ public class LanguageModelFacilitator(
         if(BuildConfig.DEBUG) Log.d(TAG, "Failed to complete prediction within the time!")
         numConsecutiveTimeouts += 1
         if(numConsecutiveTimeouts > 5) {
-            transformerDisabled = true
+            // alex: ranije iskljuceno do sledeceg polja; sada samo 30 s, i ne vazi za swipe
+            timeoutPauseUntil = System.currentTimeMillis() + 30_000L
+            numConsecutiveTimeouts = 0
             if(BuildConfig.DEBUG) Log.w(TAG, "Temporarily disabling transformer due to continuous timeouts")
         }
     }
@@ -446,7 +449,8 @@ public class LanguageModelFacilitator(
     private fun dbg(s: String) { swipeDebug?.append(s)?.append('\n') }
 
     suspend fun rescoreSwipe(dict: SuggestedWords): SuggestedWords? {
-        if(shouldPassThroughToLegacy()) { dbg("preskoceno: transformer nije za ovaj jezik/raspored"); return null }
+        if(shouldSkipForSwipe()) { dbg("preskoceno: transformer nije za ovaj jezik/raspored"); return null }
+        if(System.currentTimeMillis() < timeoutPauseUntil) dbg("napomena: kucanje je kasnilo, swipe ipak koristi transformer")
         val list = dict.mSuggestedWordInfoList
         if(list.isEmpty()) { dbg("preskoceno: dekoder bez kandidata"); return null }
         val weight = context.getSetting(SwipeLmWeightSetting)
@@ -646,7 +650,11 @@ public class LanguageModelFacilitator(
         }
     }
 
-    public fun shouldPassThroughToLegacy(): Boolean = when {
+    public fun shouldPassThroughToLegacy(): Boolean =
+        shouldSkipForSwipe() || System.currentTimeMillis() < timeoutPauseUntil
+
+    // alex: swipe rerangiranje ima svoj rok (400 ms), pa ga kasnjenja kod kucanja ne gase
+    private fun shouldSkipForSwipe(): Boolean = when {
         (!settings.current.mTransformerPredictionEnabled) -> true
         (dictionaryFacilitator.primaryLocale.language == skipLanguage) -> true
         (transformerDisabled) -> true
@@ -829,6 +837,7 @@ public class LanguageModelFacilitator(
     public fun onStartInput() {
         transformerDisabled = false
         numConsecutiveTimeouts = 0
+        timeoutPauseUntil = 0L
     }
 
     public fun isTransformerDisabled(): Boolean = transformerDisabled

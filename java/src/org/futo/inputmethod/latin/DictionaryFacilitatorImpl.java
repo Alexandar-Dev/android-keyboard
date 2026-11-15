@@ -655,7 +655,9 @@ public class DictionaryFacilitatorImpl implements DictionaryFacilitator {
             if(anyContain) {
                 for (DictionaryGroup dictionaryGroup : mDictionaryGroups) {
                     if (dictionariesValidForWord.contains(dictionaryGroup)) {
-                        dictionaryGroup.mConfidence += 1;
+                        // alex: najvise 3, da se posle duzeg kucanja na jednom jeziku
+                        // drugi jezik vrati posle 1-2 reci (ranije je rastao bez granice)
+                        dictionaryGroup.mConfidence = Math.min(3, dictionaryGroup.mConfidence + 1);
                         dictionaryGroup.mMissesInRow = 0;
                     } else {
                         dictionaryGroup.mMissesInRow += 1;
