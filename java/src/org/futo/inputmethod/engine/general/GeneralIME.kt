@@ -550,6 +550,11 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                     }
                     org.futo.inputmethod.latin.uix.alex.SwipeLog.append(context,
                         head + "
+recnik: " + org.futo.inputmethod.latin.uix.alex.SwipeLog.dictionaryLabel(
+                            context, languageModelFacilitator.dictionaryFacilitator.primaryLocale) +
+                        "
+transformer: " + languageModelFacilitator.modelLabel() +
+                        "
 pre kursora: [" + (before ?: "") + "]
 " + dbg.toString() + "prikazano: " + shown)
                 }

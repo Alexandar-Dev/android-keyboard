@@ -39,6 +39,28 @@ object SwipeLog {
         } catch (_: Exception) { }
     }
 
+    // koji recnik (fajl + verzija iz zaglavlja) i koji transformer su aktivni; kesira se po fajlu
+    private var dictKey: String? = null
+    private var dictLabel: String = "?"
+
+    fun dictionaryLabel(ctx: Context, locale: java.util.Locale?): String {
+        if (locale == null) return "nema jezika"
+        return try {
+            val f = org.futo.inputmethod.latin.uix.ResourceHelper.findFileForKind(
+                ctx, locale, org.futo.inputmethod.latin.uix.FileKind.Dictionary
+            ) ?: return "ugradjeni ($locale)"
+            val key = f.absolutePath + ":" + f.lastModified()
+            if (key != dictKey) {
+                val h = org.futo.inputmethod.latin.utils.DictionaryInfoUtils
+                    .getDictionaryFileHeaderOrNull(f, 0, f.length())
+                dictLabel = "${f.name} v${h?.mVersionString ?: "?"} \"${h?.description ?: ""}\" " +
+                    "${f.length() / 1024} KB, ${fmt.format(Date(f.lastModified()))}"
+                dictKey = key
+            }
+            dictLabel
+        } catch (e: Exception) { "greska: $e" }
+    }
+
     fun sizeKb(ctx: Context): Long = try {
         (file(ctx).length() + File(file(ctx).parentFile, "swipe_log_staro.txt").length()) / 1024
     } catch (_: Exception) { 0 }
