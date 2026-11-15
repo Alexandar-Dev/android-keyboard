@@ -144,6 +144,8 @@ private const val SWIPE_PREDICTED_FIT = 0.8f  // ocena swipe-a za takvu rec (naj
 private const val SWIPE_FIT_START = 1.1f      // udaljenost u sirinama tastera: pocetak putanje do prvog slova
 private const val SWIPE_FIT_END = 0.8f        // kraj putanje do poslednjeg slova (strozije: je/jer)
 private const val SWIPE_FIT_MID = 0.7f        // putanja mora proci blizu svakog slova izmedju
+private const val SWIPE_FIT_LEN_RATIO = 1.6f  // putanja sme biti najvise 1.6x duza od idealne za rec
+private const val SWIPE_FIT_LEN_EXTRA = 1.5f  // + 1.5 tastera (krivudanje kod kratkih reci)
 
 public class LanguageModelFacilitator(
     val context: Context,
@@ -603,6 +605,21 @@ public class LanguageModelFacilitator(
         }
         dist(0, centers.first()).let { if(it > SWIPE_FIT_START) return "pocetak%.1f".format(it) }
         dist(p.n - 1, centers.last()).let { if(it > SWIPE_FIT_END) return "kraj%.1f".format(it) }
+        // alex: putanja mnogo duza od one koju rec trazi (npr. "ne" za swipe "najverovatnije")
+        var ideal = 0f
+        for(k in 1 until centers.size) {
+            val dx = (centers[k][0] - centers[k - 1][0]) / kw
+            val dy = (centers[k][1] - centers[k - 1][1]) / kh
+            ideal += kotlin.math.sqrt(dx * dx + dy * dy)
+        }
+        var real = 0f
+        for(j in 1 until p.n) {
+            val dx = (p.xs[j] - p.xs[j - 1]) / kw
+            val dy = (p.ys[j] - p.ys[j - 1]) / kh
+            real += kotlin.math.sqrt(dx * dx + dy * dy)
+        }
+        if(real > ideal * SWIPE_FIT_LEN_RATIO + SWIPE_FIT_LEN_EXTRA)
+            return "predugacka%.0f/%.0f".format(real, ideal)
         var j = 0
         for(k in 1 until centers.size - 1) {
             while(j < p.n && dist(j, centers[k]) > SWIPE_FIT_MID) j++
