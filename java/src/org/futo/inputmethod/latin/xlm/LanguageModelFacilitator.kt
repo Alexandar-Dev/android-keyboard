@@ -137,6 +137,7 @@ private fun levenshteinDistance(s1: String, s2: String): Int {
 // alex: podesavanje swipe + transformer
 private const val SWIPE_RESCORE_TOP_N = 8
 private const val SWIPE_LM_SPAN_NATS = 10.0f  // razlika log-verovatnoce koja daje punu kaznu
+private const val SWIPE_SCORE_SPAN = 4000f    // razlika skora dekodera koja daje ocenu putanje 0 (najbolji = 1)
 // alex: reci koje predvidi transformer, a odgovaraju putanji swipe-a
 private const val SWIPE_PREDICTED_MAX = 4
 private const val SWIPE_PREDICTED_FIT = 0.8f  // ocena swipe-a za takvu rec (najbolji swipe kandidat = 1.0)
@@ -488,12 +489,12 @@ public class LanguageModelFacilitator(
         if(lp == null || lp.size != top.size) { dbg("preskoceno: scoreWords nije uspeo"); return null }
 
         val sMax = top0.maxOf { it.mScore }
-        val sMin = top0.minOf { it.mScore }
-        val spread = (sMax - sMin).coerceAtLeast(1).toFloat()
         val lpMax = lp.max()
 
         val reranked = top.mapIndexed { i, w ->
-            val d = if(i >= top0.size) SWIPE_PREDICTED_FIT else (w.mScore - sMin) / spread
+            // alex: po stvarnoj razlici od najboljeg (ranije min-max, pa je poslednji uvek dobijao 0)
+            val d = if(i >= top0.size) SWIPE_PREDICTED_FIT
+                    else (1f - (sMax - w.mScore) / SWIPE_SCORE_SPAN).coerceIn(0f, 1f)
             val l = ((lp[i] - lpMax) / SWIPE_LM_SPAN_NATS).coerceAtLeast(-1.0f)
             if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> ${d + weight * l}")
             if(swipeDebug != null) dbg("  ${if(i >= top0.size) "+" else " "}${w.mWord}: putanja=%.2f lm=%.1f -> %.2f".format(d, lp[i], d + weight * l))

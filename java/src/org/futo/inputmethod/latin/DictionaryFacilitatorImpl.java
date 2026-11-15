@@ -667,12 +667,18 @@ public class DictionaryFacilitatorImpl implements DictionaryFacilitator {
         }
     }
 
+    // alex: glavni jezik (prvi, npr. srpski) ima +1 i pobedjuje kod izjednacenja,
+    // pa jedna strana rec na pocetku teksta (npr. "I") ne prebacuje odmah na drugi jezik
+    private int effectiveConfidence(final DictionaryGroup g) {
+        return g.mConfidence + ((!mDictionaryGroups.isEmpty() && g == mDictionaryGroups.get(0)) ? 1 : 0);
+    }
+
     @Override
     public Locale getMostConfidentLocale() {
         DictionaryGroup maxDictionary = null;
         for(DictionaryGroup dictionaryGroup : mDictionaryGroups) {
             if(dictionaryGroup.mLocale == null) continue;
-            if(maxDictionary == null || dictionaryGroup.mConfidence > maxDictionary.mConfidence) {
+            if(maxDictionary == null || effectiveConfidence(dictionaryGroup) > effectiveConfidence(maxDictionary)) {
                 maxDictionary = dictionaryGroup;
             }
         }
@@ -829,11 +835,11 @@ public class DictionaryFacilitatorImpl implements DictionaryFacilitator {
     private void updateDictionaryGroupWeights() {
         int maxConfidence = 0;
         for(DictionaryGroup dictionaryGroup : mDictionaryGroups) {
-            if(dictionaryGroup.mConfidence > maxConfidence) maxConfidence = dictionaryGroup.mConfidence;
+            if(effectiveConfidence(dictionaryGroup) > maxConfidence) maxConfidence = effectiveConfidence(dictionaryGroup);
         }
 
         for(DictionaryGroup dictionaryGroup : mDictionaryGroups) {
-            if(dictionaryGroup.mConfidence >= maxConfidence) {
+            if(effectiveConfidence(dictionaryGroup) >= maxConfidence) {
                 dictionaryGroup.mWeightForTypingInLocale = DictionaryGroup.WEIGHT_FOR_MOST_PROBABLE_LANGUAGE;
                 dictionaryGroup.mWeightForGesturingInLocale = DictionaryGroup.WEIGHT_FOR_MOST_PROBABLE_LANGUAGE;
             } else {

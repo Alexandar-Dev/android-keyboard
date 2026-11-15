@@ -42,6 +42,8 @@
     <string name="ai_translate_loading">Claude is translating…</string>
     <string name="ai_translate_replace">Replace</string>
     <string name="alex_indicator_swipe">Wavy line under swipe corrections</string>
+    <string name="alex_ai_auto">Automatic AI check on pause</string>
+    <string name="alex_ai_auto_subtitle">After 2–3 s without typing, the text is checked by Claude (uses your AI key). Mistakes show as a red label in the bar; tap a wrong word to get its fix as the first suggestion. Not in password fields or incognito.</string>
     <string name="alex_swipe_log">Swipe log (diagnostics)</string>
     <string name="alex_swipe_log_subtitle">Saves swipe candidates, transformer decisions and settings to a file on this phone (Android/data/…/files/swipe_log.txt). Not saved in password fields or incognito. Turn off when done.</string>
     <string name="alex_swipe_log_clear">Delete swipe log</string>

@@ -61,6 +61,13 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
             setting = org.futo.inputmethod.latin.uix.alex.ShowTransformerIndicatorSetting
         )
 
+        // alex: automatska AI provera na pauzu
+        SettingToggleDataStore(
+            title = stringResource(R.string.alex_ai_auto),
+            subtitle = stringResource(R.string.alex_ai_auto_subtitle),
+            setting = org.futo.inputmethod.latin.uix.alex.AutoAiCheckSetting
+        )
+
         // alex: dijagnosticki swipe log
         SettingToggleDataStore(
             title = stringResource(R.string.alex_swipe_log),

@@ -268,6 +268,9 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
         setNeutralSuggestionStrip()
         dictionaryFacilitator.onStartInput()
         languageModelFacilitator.onStartInput()
+        // alex: automatska AI provera pocinje iz pocetka za svako polje
+        org.futo.inputmethod.latin.uix.alex.AutoAiCheck.reset()
+        org.futo.inputmethod.latin.uix.alex.AutoAiCheck.fixAllHandler = { fixAllAutoAi() }
         inputLogic.startInput(
             RichInputMethodManager.getInstance().combiningRulesExtraValueOfCurrentSubtype,
             settings.current
@@ -301,6 +304,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
     }
 
     override fun onFinishInput() {
+        org.futo.inputmethod.latin.uix.alex.AutoAiCheck.reset()
         inputLogic.finishInput()
         dictionaryFacilitator.onFinishInput(context)
         updateSuggestionJob?.cancel()
@@ -321,6 +325,105 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             composingSpanStart, composingSpanEnd,
             Settings.getInstance().current
         )
+        scheduleAutoAi()
+    }
+
+    // alex: automatska AI provera na pauzu (vidi uix/alex/AutoAiCheck.kt)
+    private fun readFieldTextForAi(): String? {
+        val ic = helper.getCurrentInputConnection() ?: return null
+        val before = ic.getTextBeforeCursor(4000, 0)?.toString() ?: return null
+        val after = ic.getTextAfterCursor(4000, 0)?.toString() ?: ""
+        return before + after
+    }
+
+    private fun scheduleAutoAi() {
+        val A = org.futo.inputmethod.latin.uix.alex.AutoAiCheck
+        if(!context.getSetting(org.futo.inputmethod.latin.uix.alex.AutoAiCheckSetting)) return
+        val attrs = settings.current.mInputAttributes
+        if(attrs.mIsPasswordField || attrs.mNoLearning || !settings.current.isPersonalizationEnabled) return
+        A.job?.cancel()
+        A.job = helper.lifecycleScope.launch {
+            delay(org.futo.inputmethod.latin.uix.alex.AUTO_AI_DELAY_MS)
+            val text = readFieldTextForAi() ?: return@launch
+            if(text == A.lastCheckedText) return@launch
+            val wordCount = text.split(' ', '\n', '\t').count { it.isNotBlank() }
+            if(wordCount < org.futo.inputmethod.latin.uix.alex.AUTO_AI_MIN_WORDS) {
+                A.issues = emptyList()
+                A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Idle
+                return@launch
+            }
+            val key = context.getSetting(org.futo.inputmethod.latin.uix.actions.aicheck.AiCheckApiKey)
+            if(key.isBlank()) return@launch
+            val model = context.getSetting(org.futo.inputmethod.latin.uix.actions.aicheck.AiCheckModel)
+            A.hideJob?.cancel()
+            A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Checking
+            val result = try {
+                withContext(Dispatchers.IO) {
+                    org.futo.inputmethod.latin.uix.actions.aicheck.AiCheckClient.check(key, model, text)
+                }
+            } catch(e: CancellationException) {
+                throw e
+            } catch(e: Exception) {
+                Log.e(TAG, "auto AI check failed", e)
+                A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Idle
+                return@launch
+            }
+            // tekst promenjen dok je provera trajala -> rezultat vise ne vazi
+            if(readFieldTextForAi() != text) {
+                A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Idle
+                return@launch
+            }
+            A.lastCheckedText = text
+            A.issues = result.issues.mapNotNull {
+                val o = it.original ?: return@mapNotNull null
+                val r = it.replacement ?: return@mapNotNull null
+                if(o.isBlank() || o == r || !text.contains(o)) null
+                else org.futo.inputmethod.latin.uix.alex.AutoIssue(o, r)
+            }
+            showAutoAiResult()
+        }
+    }
+
+    private fun showAutoAiResult() {
+        val A = org.futo.inputmethod.latin.uix.alex.AutoAiCheck
+        A.hideJob?.cancel()
+        if(A.issues.isEmpty()) {
+            A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Ok
+            A.hideJob = helper.lifecycleScope.launch {
+                delay(2000L)
+                if(A.status.value == org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Ok)
+                    A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Idle
+            }
+        } else {
+            A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Errors(A.issues.size)
+        }
+    }
+
+    // tap na oznaku "N greske": ispravi sve u polju
+    private fun fixAllAutoAi() {
+        val A = org.futo.inputmethod.latin.uix.alex.AutoAiCheck
+        val ic = helper.getCurrentInputConnection() ?: return
+        val text = readFieldTextForAi() ?: return
+        var newText = text
+        for(iss in A.issues) {
+            val at = newText.indexOf(iss.original)
+            if(at >= 0) newText = newText.substring(0, at) + iss.replacement + newText.substring(at + iss.original.length)
+        }
+        if(newText != text) {
+            ic.beginBatchEdit()
+            try {
+                ic.finishComposingText()
+                val b = ic.getTextBeforeCursor(4000, 0)?.length ?: 0
+                val a = ic.getTextAfterCursor(4000, 0)?.length ?: 0
+                ic.deleteSurroundingText(b, a)
+                ic.commitText(newText, 1)
+            } finally {
+                ic.endBatchEdit()
+            }
+        }
+        A.issues = emptyList()
+        A.lastCheckedText = newText
+        showAutoAiResult()
     }
 
     override fun isGestureHandlingAvailable(): Boolean =
@@ -863,6 +966,26 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 .take(NEXT_WORD_ROW_MAX)
             inputLogic.setSuggestedWords(SuggestedWords.getEmptyInstance())
             helper.setNeutralSuggestionStrip(expandableCfg)
+            return
+        }
+        // alex: kursor u reci koju je AI oznacio -> ispravka je prvi predlog (tap menja samo tu rec)
+        val aiFix = if(words != null && !words.isPrediction &&
+            org.futo.inputmethod.latin.uix.alex.AutoAiCheck.issues.isNotEmpty()) {
+            val typed = inputLogic.mWordComposer.typedWord
+            if(typed.isNullOrEmpty()) null
+            else org.futo.inputmethod.latin.uix.alex.AutoAiCheck.replacementFor(typed)?.takeIf { it != typed }
+        } else null
+        if(aiFix != null && words != null) {
+            val info = SuggestedWordInfo(aiFix, "", Int.MAX_VALUE, SuggestedWordInfo.KIND_CORRECTION,
+                Dictionary.DICTIONARY_USER_TYPED, SuggestedWordInfo.NOT_AN_INDEX, SuggestedWordInfo.NOT_A_CONFIDENCE)
+            val rest = words.mSuggestedWordInfoList.filter { it.mWord != aiFix }
+            val list = ArrayList<SuggestedWordInfo>(listOf(info) + rest)
+            val withFix = SuggestedWords(list, words.mRawSuggestions, words.mTypedWordInfo, words.mTypedWordValid,
+                false, words.mIsObsoleteSuggestions, words.mInputStyle, words.mSequenceNumber)
+            inputLogic.setSuggestedWords(withFix)
+            NextWordRowState.topWords.value = list.map { it.mWord.lowercase() }.toSet()
+            if(settings.current.isSuggestionsEnabledPerUserSettings) helper.showSuggestionStrip(withFix, expandableCfg)
+            else helper.setNeutralSuggestionStrip(expandableCfg)
             return
         }
         inputLogic.setSuggestedWords(words)

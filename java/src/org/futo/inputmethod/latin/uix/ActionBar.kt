@@ -880,6 +880,9 @@ fun ActionBar(
                     )
                 }
 
+                // alex: oznaka automatske AI provere
+                org.futo.inputmethod.latin.uix.alex.AutoAiChip()
+
                 if(oldActionBar.value && isActionsExpanded) {
                     Box(modifier = Modifier
                         .weight(1.0f)
@@ -1287,6 +1290,10 @@ private fun RowScope.InlineCandidates(
                         )
                     }
                 }
+            }
+            item {
+                // alex: oznaka automatske AI provere
+                org.futo.inputmethod.latin.uix.alex.AutoAiChip()
             }
             itemsIndexed(wordList) { i, it ->
                 CandidateItem(Modifier.height(ActionBarHeight), it,
