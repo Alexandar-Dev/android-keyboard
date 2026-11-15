@@ -439,20 +439,32 @@ public class LanguageModelFacilitator(
 
     // alex: swipe kandidate iz recnika ponovo rangira transformer (verovatnoca reci u kontekstu).
     // Konacna ocena = ocena swipe-a (0..1 unutar prvih N) + tezina * ocena modela (-1..0).
+    // alex: kad je swipe log ukljucen, GeneralIME ovde postavi bafer i rescoreSwipe upisuje sta radi
+    @Volatile var swipeDebug: StringBuilder? = null
+    private fun dbg(s: String) { swipeDebug?.append(s)?.append('
+') }
+
     suspend fun rescoreSwipe(dict: SuggestedWords): SuggestedWords? {
-        if(shouldPassThroughToLegacy()) return null
+        if(shouldPassThroughToLegacy()) { dbg("preskoceno: transformer nije za ovaj jezik/raspored"); return null }
         val list = dict.mSuggestedWordInfoList
-        if(list.isEmpty()) return null
+        if(list.isEmpty()) { dbg("preskoceno: dekoder bez kandidata"); return null }
         val weight = context.getSetting(SwipeLmWeightSetting)
-        if(weight <= 0.01f) return null
+        if(weight <= 0.01f) { dbg("preskoceno: jacina 0"); return null }
         // putanju uzeti odmah, dok je composer jos drzi
         val path = currentSwipePath()
-        val lm = try { prepareLanguageModel() } catch(e: ModelLoadingException) { null } ?: return null
+        if(path == null) dbg("putanja: nema (ubacivanje predvidjenih reci iskljuceno)")
+        else if(swipeDebug != null) dbg("putanja: ${path.n} tacaka, od ${keyNear(path, 0)} do ${keyNear(path, path.n - 1)}")
+        val lm = try { prepareLanguageModel() } catch(e: ModelLoadingException) { null }
+        if(lm == null) { dbg("preskoceno: transformer model nije ucitan"); return null }
 
         val ngramContext = inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
             settings.current.mSpacingAndPunctuations, 2
         )
         val top0 = list.take(SWIPE_RESCORE_TOP_N)
+        if(swipeDebug != null) {
+            dbg("kontekst: [${ngramContext.extractPrevWordsContext()}]")
+            dbg("dekoder: " + list.take(12).joinToString(" ") { "${it.mWord}(${it.mScore})" })
+        }
 
         // alex: reci koje transformer ocekuje, a putanja im odgovara, dodaju se medju kandidate
         val extra = if(path == null) emptyList() else try {
@@ -470,10 +482,10 @@ public class LanguageModelFacilitator(
                 mOriginatesFromTransformerLM = true
             }
         }
-        if(top.size < 2) return null
+        if(top.size < 2) { dbg("preskoceno: samo jedan kandidat"); return null }
 
-        val lp = lm.scoreWords(ngramContext, top.map { it.mWord }) ?: return null
-        if(lp.size != top.size) return null
+        val lp = lm.scoreWords(ngramContext, top.map { it.mWord })
+        if(lp == null || lp.size != top.size) { dbg("preskoceno: scoreWords nije uspeo"); return null }
 
         val sMax = top0.maxOf { it.mScore }
         val sMin = top0.minOf { it.mScore }
@@ -484,10 +496,12 @@ public class LanguageModelFacilitator(
             val d = if(i >= top0.size) SWIPE_PREDICTED_FIT else (w.mScore - sMin) / spread
             val l = ((lp[i] - lpMax) / SWIPE_LM_SPAN_NATS).coerceAtLeast(-1.0f)
             if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> ${d + weight * l}")
+            if(swipeDebug != null) dbg("  ${if(i >= top0.size) "+" else " "}${w.mWord}: putanja=%.2f lm=%.1f -> %.2f".format(d, lp[i], d + weight * l))
             w to (d + weight * l)
         }.sortedByDescending { it.second }.map { it.first }
 
-        if(reranked.first() == top.first() && reranked == top) return null
+        if(reranked.first() == top.first() && reranked == top) { dbg("redosled: bez promene"); return null }
+        dbg("redosled: " + reranked.joinToString(" ") { it.mWord })
 
         val newList = ArrayList<SuggestedWordInfo>(reranked + list.drop(top0.size))
         return SuggestedWords(
@@ -519,11 +533,32 @@ public class LanguageModelFacilitator(
         val kb = keyboardSwitcher.keyboard ?: return emptyList()
         val prox = kb.proximityInfo?.nativeProximityInfo ?: return emptyList()
         val predicted = lm.predictNextWords(ngram, null, null, prox)
-        return predicted.filter { w ->
-            w.length >= 2 && w.lowercase() !in have
-                && dictionaryFacilitator.isValidSuggestionWord(w)
-                && fitsSwipePath(kb, w, path)
-        }.take(SWIPE_PREDICTED_MAX)
+        val ok = ArrayList<String>()
+        val why = ArrayList<String>()
+        for(w in predicted) {
+            val r = when {
+                w.length < 2 -> "kratka"
+                w.lowercase() in have -> "vec_ima"
+                !dictionaryFacilitator.isValidSuggestionWord(w) -> "nije_u_recniku"
+                else -> fitReason(kb, w, path) ?: "OK"
+            }
+            if(r == "OK" && ok.size < SWIPE_PREDICTED_MAX) ok.add(w)
+            if(swipeDebug != null) why.add("$w:$r")
+        }
+        if(swipeDebug != null) dbg("transformer predvidja: " + why.joinToString(" "))
+        return ok
+    }
+
+    private fun keyNear(p: SwipePath, j: Int): String {
+        val kb = keyboardSwitcher.keyboard ?: return "?"
+        var best = "?"; var bd = Float.MAX_VALUE
+        for(k in kb.sortedKeys) {
+            if(k.code <= 0) continue
+            val dx = p.xs[j] - (k.x + k.width / 2f); val dy = p.ys[j] - (k.y + k.height / 2f)
+            val d = dx * dx + dy * dy
+            if(d < bd) { bd = d; best = String(Character.toChars(k.code)) }
+        }
+        return best
     }
 
     private fun keyCenter(kb: Keyboard, c: Int): FloatArray? {
@@ -538,7 +573,10 @@ public class LanguageModelFacilitator(
         return floatArrayOf(key.x + key.width / 2f, key.y + key.height / 2f)
     }
 
-    private fun fitsSwipePath(kb: Keyboard, word: String, p: SwipePath): Boolean {
+    private fun fitsSwipePath(kb: Keyboard, word: String, p: SwipePath): Boolean = fitReason(kb, word, p) == null
+
+    // null = rec odgovara putanji; inace razlog odbijanja (za log)
+    private fun fitReason(kb: Keyboard, word: String, p: SwipePath): String? {
         val kw = kb.mMostCommonKeyWidth.toFloat().coerceAtLeast(1f)
         val kh = kb.mMostCommonKeyHeight.toFloat().coerceAtLeast(1f)
         val centers = ArrayList<FloatArray>()
@@ -550,22 +588,22 @@ public class LanguageModelFacilitator(
             i += Character.charCount(cp)
             if(!Character.isLetter(cp) || cp == prev) continue // dupla slova swipe ne vidi
             prev = cp
-            centers.add(keyCenter(kb, cp) ?: return false)
+            centers.add(keyCenter(kb, cp) ?: return "nema_tastera")
         }
-        if(centers.size < 2) return false
+        if(centers.size < 2) return "kratka"
         fun dist(j: Int, c: FloatArray): Float {
             val dx = (p.xs[j] - c[0]) / kw
             val dy = (p.ys[j] - c[1]) / kh
             return kotlin.math.sqrt(dx * dx + dy * dy)
         }
-        if(dist(0, centers.first()) > SWIPE_FIT_START) return false
-        if(dist(p.n - 1, centers.last()) > SWIPE_FIT_END) return false
+        dist(0, centers.first()).let { if(it > SWIPE_FIT_START) return "pocetak%.1f".format(it) }
+        dist(p.n - 1, centers.last()).let { if(it > SWIPE_FIT_END) return "kraj%.1f".format(it) }
         var j = 0
         for(k in 1 until centers.size - 1) {
             while(j < p.n && dist(j, centers[k]) > SWIPE_FIT_MID) j++
-            if(j >= p.n) return false
+            if(j >= p.n) return "sredina_slovo${k + 1}"
         }
-        return true
+        return null
     }
 
     public suspend fun destroyModel() {

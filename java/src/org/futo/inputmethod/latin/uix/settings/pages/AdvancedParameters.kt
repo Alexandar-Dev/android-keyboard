@@ -1,6 +1,8 @@
 package org.futo.inputmethod.latin.uix.settings.pages
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -58,6 +60,23 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
             title = stringResource(R.string.alex_indicator_transformer),
             setting = org.futo.inputmethod.latin.uix.alex.ShowTransformerIndicatorSetting
         )
+
+        // alex: dijagnosticki swipe log
+        SettingToggleDataStore(
+            title = stringResource(R.string.alex_swipe_log),
+            subtitle = stringResource(R.string.alex_swipe_log_subtitle),
+            setting = org.futo.inputmethod.latin.uix.alex.SwipeLogSetting
+        )
+        val ctx = LocalContext.current
+        var logKb by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(org.futo.inputmethod.latin.uix.alex.SwipeLog.sizeKb(ctx)) }
+        org.futo.inputmethod.latin.uix.settings.SettingItem(
+            title = stringResource(R.string.alex_swipe_log_clear),
+            subtitle = "$logKb KB",
+            onClick = {
+                org.futo.inputmethod.latin.uix.alex.SwipeLog.clear(ctx)
+                logKb = org.futo.inputmethod.latin.uix.alex.SwipeLog.sizeKb(ctx)
+            }
+        ) { }
 
         SettingToggleDataStore(
             title = stringResource(R.string.alex_scrollable_suggestions),

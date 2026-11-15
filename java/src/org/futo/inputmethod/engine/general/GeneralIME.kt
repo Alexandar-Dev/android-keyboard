@@ -517,14 +517,42 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             // alex: swipe kandidate ponovo rangira transformer (ako stigne na vreme)
             val swiped = dictResult
             if(inputStyle == SuggestedWords.INPUT_STYLE_TAIL_BATCH && swiped != null) {
+                // alex: swipe log (samo kad je ukljucen; nikad u poljima za lozinku/inkognito)
+                val attrs = settings.current.mInputAttributes
+                val logIt = context.getSetting(org.futo.inputmethod.latin.uix.alex.SwipeLogSetting) &&
+                        !attrs.mIsPasswordField && !attrs.mNoLearning && settings.current.isPersonalizationEnabled
+                val dbg = if(logIt) StringBuilder() else null
+                languageModelFacilitator.swipeDebug = dbg
+                val t0 = System.currentTimeMillis()
+                var finished = false
                 val rescored = try {
-                    withTimeoutOrNull(400L) { languageModelFacilitator.rescoreSwipe(swiped) }
+                    withTimeoutOrNull(400L) { languageModelFacilitator.rescoreSwipe(swiped).also { finished = true } }
                 } catch(e: Exception) {
                     if(e is CancellationException) throw e
                     Log.e(TAG, "swipe rescore failed", e)
+                    dbg?.append("greska: ").append(e.toString()).append('
+')
                     null
+                } finally {
+                    languageModelFacilitator.swipeDebug = null
                 }
                 if(rescored != null) dictResult = rescored
+                if(dbg != null) {
+                    val ms = System.currentTimeMillis() - t0
+                    val head = "podesavanja: swipe=%.2f a=%.1f T=%.1f | vreme %d ms%s".format(
+                        context.getSetting(org.futo.inputmethod.latin.xlm.SwipeLmWeightSetting),
+                        context.getSetting(org.futo.inputmethod.latin.xlm.BinaryDictTransformerWeightSetting),
+                        context.getSetting(org.futo.inputmethod.latin.xlm.AutocorrectThresholdSetting),
+                        ms, if(!finished) " (ISTEKAO ROK 400 ms)" else "")
+                    val before = try { inputLogic.mConnection.getTextBeforeCursor(60, 0)?.toString() } catch(e: Exception) { null }
+                    val shown = dictResult?.mSuggestedWordInfoList?.take(6)?.joinToString(" ") {
+                        it.mWord + (if(it.mOriginatesFromTransformerLM) "[T]" else if(it.mOriginatesFromSwipeModel) "[S]" else "")
+                    }
+                    org.futo.inputmethod.latin.uix.alex.SwipeLog.append(context,
+                        head + "
+pre kursora: [" + (before ?: "") + "]
+" + dbg.toString() + "prikazano: " + shown)
+                }
 
                 // alex: red za sledecu rec (ako je ukljucen)
                 val topWord = dictResult?.mSuggestedWordInfoList?.firstOrNull()?.mWord
