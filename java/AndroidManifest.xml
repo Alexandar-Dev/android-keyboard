@@ -215,6 +215,26 @@
             android:exported="false"
             android:grantUriPermissions="true" />
 
+        <!-- alex: deljenje swipe loga -->
+        <activity android:name=".uix.alex.ShareSwipeLogActivity"
+            android:label="@string/alex_swipe_log_share"
+            android:icon="@mipmap/ic_launcher"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.swipelog"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/alex_swipe_log_paths" />
+        </provider>
+
         <provider
             android:authorities="${applicationId}.clipboard"
             android:name=".uix.actions.clipboard.ClipboardProvider"

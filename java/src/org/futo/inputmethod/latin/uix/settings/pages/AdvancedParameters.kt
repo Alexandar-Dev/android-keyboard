@@ -77,6 +77,43 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
                 logKb = org.futo.inputmethod.latin.uix.alex.SwipeLog.sizeKb(ctx)
             }
         ) { }
+        org.futo.inputmethod.latin.uix.settings.SettingItem(
+            title = stringResource(R.string.alex_swipe_log_save),
+            subtitle = "Download/FUTO/",
+            onClick = {
+                val msg = try {
+                    org.futo.inputmethod.latin.uix.alex.ShareSwipeLogActivity.saveToDownloads(ctx)
+                        ?.let { ctx.getString(R.string.alex_swipe_log_saved, it) }
+                        ?: ctx.getString(R.string.alex_swipe_log_empty)
+                } catch (e: Exception) { e.toString() }
+                android.widget.Toast.makeText(ctx, msg, android.widget.Toast.LENGTH_LONG).show()
+            }
+        ) { }
+        org.futo.inputmethod.latin.uix.settings.SettingItem(
+            title = stringResource(R.string.alex_swipe_log_share),
+            onClick = {
+                ctx.startActivity(android.content.Intent(ctx, org.futo.inputmethod.latin.uix.alex.ShareSwipeLogActivity::class.java)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        ) { }
+        org.futo.inputmethod.latin.uix.settings.SettingItem(
+            title = stringResource(R.string.alex_swipe_log_shortcut),
+            subtitle = stringResource(R.string.alex_swipe_log_shortcut_subtitle),
+            onClick = {
+                val i = android.content.Intent(ctx, org.futo.inputmethod.latin.uix.alex.ShareSwipeLogActivity::class.java)
+                    .setAction(org.futo.inputmethod.latin.uix.alex.ShareSwipeLogActivity.ACTION_SAVE)
+                val sc = androidx.core.content.pm.ShortcutInfoCompat.Builder(ctx, "alex_swipe_log")
+                    .setShortLabel(ctx.getString(R.string.alex_swipe_log_shortcut_label))
+                    .setIcon(androidx.core.graphics.drawable.IconCompat.createWithResource(ctx, R.mipmap.ic_launcher))
+                    .setIntent(i)
+                    .build()
+                if (androidx.core.content.pm.ShortcutManagerCompat.isRequestPinShortcutSupported(ctx)) {
+                    androidx.core.content.pm.ShortcutManagerCompat.requestPinShortcut(ctx, sc, null)
+                } else {
+                    android.widget.Toast.makeText(ctx, R.string.alex_swipe_log_shortcut_unsupported, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        ) { }
 
         SettingToggleDataStore(
             title = stringResource(R.string.alex_scrollable_suggestions),
