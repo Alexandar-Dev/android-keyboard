@@ -530,7 +530,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 } catch(e: Exception) {
                     if(e is CancellationException) throw e
                     Log.e(TAG, "swipe rescore failed", e)
-                    dbg?.append("greska: ").append(e.toString()).append('\n')
+                    dbg?.append("greska: $e\n")
                     null
                 } finally {
                     languageModelFacilitator.swipeDebug = null
