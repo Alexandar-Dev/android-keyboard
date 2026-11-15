@@ -44,4 +44,14 @@
     <string name="ai_translate_replace">Zameni</string>
     <string name="alex_indicator_swipe">Talasasta linija ispod ispravki (swipe)</string>
     <string name="alex_indicator_transformer">Ravna linija ispod predloga (transformer)</string>
+    <plurals name="ai_quick_mistakes">
+        <item quantity="one">%1$d greška</item>
+        <item quantity="few">%1$d greške</item>
+        <item quantity="other">%1$d grešaka</item>
+    </plurals>
+    <string name="ai_quick_ok">✓ OK</string>
+    <string name="ai_quick_failed">AI nije odgovorio</string>
+    <string name="alex_swipe_log">Swipe log (dijagnostika)</string>
+    <string name="alex_swipe_log_subtitle">Čuva swipe kandidate, odluke transformera i podešavanja u fajl na ovom telefonu (Android/data/…/files/swipe_log.txt). Ne beleži u poljima za lozinku ni u inkognito režimu. Isključi kad završiš.</string>
+    <string name="alex_swipe_log_clear">Obriši swipe log</string>
 </resources>

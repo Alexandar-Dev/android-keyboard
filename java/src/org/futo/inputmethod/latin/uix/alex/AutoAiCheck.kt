@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import kotlinx.coroutines.Job
 import org.futo.inputmethod.latin.uix.SettingsKey
@@ -88,6 +90,7 @@ private val ChipGreenBg = Color(0x333FAE73)
 private val ChipGrey = Color(0xFFC3C8D2)
 private val ChipGreyBg = Color(0x33FFFFFF)
 
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun AutoAiChip() {
     val s = AutoAiCheck.status.value
@@ -102,11 +105,11 @@ fun AutoAiChip() {
         AutoAiStatus.Idle -> return
         AutoAiStatus.Checking -> return
         is AutoAiStatus.Errors -> Triple(
-            if (s.n == 1) "1 greška" else if (s.n in 2..4) "${s.n} greške" else "${s.n} grešaka",
+            pluralStringResource(R.plurals.ai_quick_mistakes, s.n, s.n),
             ChipRed, ChipRedBg
         )
-        AutoAiStatus.Ok -> Triple("✓ OK", ChipGreen, ChipGreenBg)
-        AutoAiStatus.Failed -> Triple("AI nije odgovorio", ChipGrey, ChipGreyBg)
+        AutoAiStatus.Ok -> Triple(stringResource(R.string.ai_quick_ok), ChipGreen, ChipGreenBg)
+        AutoAiStatus.Failed -> Triple(stringResource(R.string.ai_quick_failed), ChipGrey, ChipGreyBg)
     }
     Box(Modifier.fillMaxHeight().padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
         Box(
