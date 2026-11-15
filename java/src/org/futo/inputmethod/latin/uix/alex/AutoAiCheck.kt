@@ -127,7 +127,7 @@ fun AutoAiChip() {
 // Ikonica "AI brza provera": stavi je kao Action key (pored ?123) u Edit actions.
 // Proverava tekst bez otvaranja prozora: oznaka u traci, crvena linija, ispravka u traci kad tapnes rec.
 val AiQuickCheckAction = Action(
-    icon = R.drawable.icon_spellcheck,
+    icon = R.drawable.ai_quick_check,
     name = R.string.ai_quick_check_title,
     windowImpl = null,
     simplePressImpl = { _, _ -> AutoAiCheck.runHandler?.invoke() },
