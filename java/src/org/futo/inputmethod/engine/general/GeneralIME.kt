@@ -325,7 +325,69 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             composingSpanStart, composingSpanEnd,
             Settings.getInstance().current
         )
+        lastSelStart = newSelStart; lastSelEnd = newSelEnd
+        lastCompStart = composingSpanStart; lastCompEnd = composingSpanEnd
         scheduleAutoAi()
+    }
+
+    // alex: poslednji poznat kursor i rec koja se kuca (za crvene linije AI provere)
+    private var lastSelStart = -1
+    private var lastSelEnd = -1
+    private var lastCompStart = -1
+    private var lastCompEnd = -1
+
+    // Oznaci pogresne reci u polju kao "pogresno napisane" (SuggestionSpan), pa ih aplikacija
+    // podvuce crveno, kao Androidova provera pravopisa. Radi samo gde aplikacija podrzava te oznake.
+    private fun applyAutoAiUnderlines(text: String) {
+        val A = org.futo.inputmethod.latin.uix.alex.AutoAiCheck
+        val ic = helper.getCurrentInputConnection() ?: return
+        if(lastSelStart < 0) return
+        val before = ic.getTextBeforeCursor(4000, 0)?.toString() ?: return
+        val base = lastSelStart - before.length
+        if(base < 0) return
+        val selS = lastSelStart; val selE = lastSelEnd
+        val compS = lastCompStart; val compE = lastCompEnd
+        val newOnes = A.issues.map { it.original }
+        try {
+            ic.beginBatchEdit()
+            for(w in A.underlined) if(w !in newOnes) markAutoAiWord(ic, text, base, w, null, compS, compE)
+            for(iss in A.issues) markAutoAiWord(ic, text, base, iss.original, iss.replacement, compS, compE)
+            if(compS in 0 until compE) ic.setComposingRegion(compS, compE)
+            ic.setSelection(selS, selE)
+        } catch(e: Exception) {
+            Log.e(TAG, "AI underline failed", e)
+        } finally {
+            ic.endBatchEdit()
+        }
+        A.underlined = newOnes
+    }
+
+    private fun markAutoAiWord(
+        ic: android.view.inputmethod.InputConnection, text: String, base: Int,
+        word: String, fix: String?, compS: Int, compE: Int
+    ) {
+        var from = 0
+        while(true) {
+            val at = text.indexOf(word, from)
+            if(at < 0) break
+            from = at + word.length
+            if(at > 0 && text[at - 1].isLetterOrDigit()) continue          // samo cela rec
+            if(from < text.length && text[from].isLetterOrDigit()) continue
+            val s = base + at
+            val e = s + word.length
+            if(compS >= 0 && s < compE && e > compS) continue                // rec koja se upravo kuca
+            val sp = android.text.SpannableString(word)
+            if(fix != null) {
+                sp.setSpan(
+                    android.text.style.SuggestionSpan(context, arrayOf(fix),
+                        android.text.style.SuggestionSpan.FLAG_EASY_CORRECT or android.text.style.SuggestionSpan.FLAG_MISSPELLED),
+                    0, word.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+            ic.setComposingRegion(s, e)
+            ic.setComposingText(sp, 1)
+            ic.finishComposingText()
+        }
     }
 
     // alex: automatska AI provera na pauzu (vidi uix/alex/AutoAiCheck.kt)
@@ -381,6 +443,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 else org.futo.inputmethod.latin.uix.alex.AutoIssue(o, r)
             }
             showAutoAiResult()
+            applyAutoAiUnderlines(text)
         }
     }
 
@@ -422,6 +485,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             }
         }
         A.issues = emptyList()
+        A.underlined = emptyList()
         A.lastCheckedText = newText
         showAutoAiResult()
     }

@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
@@ -43,6 +45,8 @@ object AutoAiCheck {
     val status = mutableStateOf<AutoAiStatus>(AutoAiStatus.Idle)
     @Volatile var issues: List<AutoIssue> = emptyList()
     @Volatile var lastCheckedText: String? = null
+    // reci koje su trenutno oznacene crvenom linijom u polju
+    @Volatile var underlined: List<String> = emptyList()
     var job: Job? = null
     var hideJob: Job? = null
 
@@ -65,6 +69,7 @@ object AutoAiCheck {
     fun reset() {
         job?.cancel(); hideJob?.cancel()
         issues = emptyList()
+        underlined = emptyList()
         lastCheckedText = null
         status.value = AutoAiStatus.Idle
     }
@@ -80,9 +85,16 @@ private val ChipGreyBg = Color(0x33FFFFFF)
 @Composable
 fun AutoAiChip() {
     val s = AutoAiCheck.status.value
+    if (s == AutoAiStatus.Checking) {
+        // dok proverava: samo krug koji se vrti
+        Box(Modifier.fillMaxHeight().padding(horizontal = 10.dp), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(Modifier.size(16.dp), color = ChipGrey, strokeWidth = 2.dp)
+        }
+        return
+    }
     val (text, fg, bg) = when (s) {
         AutoAiStatus.Idle -> return
-        AutoAiStatus.Checking -> Triple("AI …", ChipGrey, ChipGreyBg)
+        AutoAiStatus.Checking -> return
         is AutoAiStatus.Errors -> Triple(
             if (s.n == 1) "1 greška" else if (s.n in 2..4) "${s.n} greške" else "${s.n} grešaka",
             ChipRed, ChipRedBg
