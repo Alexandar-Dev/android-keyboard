@@ -1234,6 +1234,14 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         final int code = key.getCode();
         if (code == Constants.CODE_SPACE || code == Constants.CODE_LANGUAGE_SWITCH) {
             int spacebarMode = Settings.getInstance().getCurrent().mSpacebarHoldMode;
+            // alex: drzanje razmaka = AI provera (ako je ukljucena). Drzanje + pomeranje i dalje pomera kursor.
+            if (code == Constants.CODE_SPACE
+                    && sListener.onCustomRequest(Constants.CUSTOM_CODE_ALEX_AI_CHECK)
+                    && spacebarMode != Settings.SPACEBAR_MODE_CURSOR) {
+                cancelKeyTracking();
+                sListener.onReleaseKey(code, false /* withSliding */);
+                return;
+            }
             if(spacebarMode == Settings.SPACEBAR_MODE_CURSOR) {
                 mSpacebarLongPressed = true;
                 mStartX = mLastX;

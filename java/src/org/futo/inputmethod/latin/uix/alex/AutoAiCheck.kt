@@ -1,7 +1,7 @@
 package org.futo.inputmethod.latin.uix.alex
 
 // alex: automatska AI provera na pauzu u kucanju.
-// Posle AUTO_AI_DELAY_MS bez promene teksta, tekst iz polja ide Claude-u (isti klijent kao rucno AI dugme).
+// Na drzanje razmaka (bez pomeranja) tekst iz polja ide Claude-u (isti klijent kao rucno AI dugme).
 // Nadjene greske: oznaka u traci ("2 greške", tap = ispravi sve); kad je kursor u pogresnoj reci,
 // ispravka je prvi predlog u traci (tap = ispravi samo tu rec).
 

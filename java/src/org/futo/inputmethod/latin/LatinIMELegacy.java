@@ -625,6 +625,8 @@ public class LatinIMELegacy implements KeyboardActionListener,
             if(!canDoLanguageSwitch()) return false;
             getLatinIME().getUixManager().showLanguageSwitcher();
             return true;
+        case Constants.CUSTOM_CODE_ALEX_AI_CHECK:
+            return mImeManager.getActiveIME(mSettings.getCurrent()).onCustomRequest(requestCode);
         }
         return false;
     }

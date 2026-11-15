@@ -95,7 +95,11 @@ fun NextWordRow(manager: KeyboardManagerForAction) {
                         .clickable {
                             manager.performHapticAndAudioFeedback(Constants.CODE_TAB, view)
                             NextWordRowState.clear()
-                            manager.typeText(w)
+                            // razmak ispred ako prethodna rec nije odvojena (tap, tap -> "rec1 rec2")
+                            val prev = manager.getLatinIMEForDebug().currentInputConnection
+                                ?.getTextBeforeCursor(1, 0)?.toString() ?: ""
+                            val needSpace = prev.isNotEmpty() && !prev[0].isWhitespace()
+                            manager.typeText(if (needSpace) " $w" else w)
                             val ic = manager.getLatinIMEForDebug().currentInputConnection
                             val before = ic?.getTextBeforeCursor(500, 0)?.toString()
                             if (before != null) NextWordRowState.requester?.invoke(before)

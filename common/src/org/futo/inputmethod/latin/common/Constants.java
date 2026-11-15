@@ -195,6 +195,8 @@ public final class Constants {
      */
     // The code to show input method picker.
     public static final int CUSTOM_CODE_SHOW_INPUT_METHOD_PICKER = 1;
+    // alex: drzanje razmaka pokrece AI proveru
+    public static final int CUSTOM_CODE_ALEX_AI_CHECK = 900;
 
     /**
      * Some common keys code. Must be positive.

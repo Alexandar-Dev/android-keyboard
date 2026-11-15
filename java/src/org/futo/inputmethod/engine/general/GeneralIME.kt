@@ -327,7 +327,6 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
         )
         lastSelStart = newSelStart; lastSelEnd = newSelEnd
         lastCompStart = composingSpanStart; lastCompEnd = composingSpanEnd
-        scheduleAutoAi()
     }
 
     // alex: poslednji poznat kursor i rec koja se kuca (za crvene linije AI provere)
@@ -398,16 +397,21 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
         return before + after
     }
 
-    private fun scheduleAutoAi() {
+    // alex: AI provera na drzanje razmaka. Vraca true ako je pokrenuta (tada razmak ne radi svoju staru radnju).
+    private fun runAutoAiCheck(): Boolean {
         val A = org.futo.inputmethod.latin.uix.alex.AutoAiCheck
-        if(!context.getSetting(org.futo.inputmethod.latin.uix.alex.AutoAiCheckSetting)) return
+        if(!context.getSetting(org.futo.inputmethod.latin.uix.alex.AutoAiCheckSetting)) return false
         val attrs = settings.current.mInputAttributes
-        if(attrs.mIsPasswordField || attrs.mNoLearning || !settings.current.isPersonalizationEnabled) return
+        if(attrs.mIsPasswordField || attrs.mNoLearning || !settings.current.isPersonalizationEnabled) return false
+        helper.keyboardSwitcher.mainKeyboardView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         A.job?.cancel()
         A.job = helper.lifecycleScope.launch {
-            delay(org.futo.inputmethod.latin.uix.alex.AUTO_AI_DELAY_MS)
             val text = readFieldTextForAi() ?: return@launch
-            if(text == A.lastCheckedText) return@launch
+            if(text == A.lastCheckedText) {
+                // isti tekst: samo ponovo pokazi poslednji rezultat, bez novog poziva
+                showAutoAiResult()
+                return@launch
+            }
             val wordCount = text.split(' ', '\n', '\t').count { it.isNotBlank() }
             if(wordCount < org.futo.inputmethod.latin.uix.alex.AUTO_AI_MIN_WORDS) {
                 A.issues = emptyList()
@@ -445,6 +449,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             showAutoAiResult()
             applyAutoAiUnderlines(text)
         }
+        return true
     }
 
     private fun showAutoAiResult() {
@@ -875,7 +880,8 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
     }
 
     override fun onCustomRequest(requestCode: Int): Boolean {
-        return false // GeneralIME does nothing
+        if(requestCode == Constants.CUSTOM_CODE_ALEX_AI_CHECK) return runAutoAiCheck()
+        return false
     }
 
     override fun onMovePointer(steps: Int, stepOverWords: Boolean, select: Boolean?) {
