@@ -271,6 +271,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
         // alex: automatska AI provera pocinje iz pocetka za svako polje
         org.futo.inputmethod.latin.uix.alex.AutoAiCheck.reset()
         org.futo.inputmethod.latin.uix.alex.AutoAiCheck.fixAllHandler = { fixAllAutoAi() }
+        org.futo.inputmethod.latin.uix.alex.AutoAiCheck.runHandler = { runAutoAiCheck() }
         inputLogic.startInput(
             RichInputMethodManager.getInstance().combiningRulesExtraValueOfCurrentSubtype,
             settings.current
@@ -397,10 +398,9 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
         return before + after
     }
 
-    // alex: AI provera na drzanje razmaka. Vraca true ako je pokrenuta (tada razmak ne radi svoju staru radnju).
+    // alex: brza AI provera (ikonica "AI brza provera", npr. kao Action key pored ?123). Vraca true ako je pokrenuta.
     private fun runAutoAiCheck(): Boolean {
         val A = org.futo.inputmethod.latin.uix.alex.AutoAiCheck
-        if(!context.getSetting(org.futo.inputmethod.latin.uix.alex.AutoAiCheckSetting)) return false
         val attrs = settings.current.mInputAttributes
         if(attrs.mIsPasswordField || attrs.mNoLearning || !settings.current.isPersonalizationEnabled) return false
         helper.keyboardSwitcher.mainKeyboardView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)

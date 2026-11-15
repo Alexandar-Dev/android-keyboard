@@ -42,6 +42,7 @@
     <string name="ai_translate_loading">Claude is translating…</string>
     <string name="ai_translate_replace">Replace</string>
     <string name="alex_indicator_swipe">Wavy line under swipe corrections</string>
+    <string name="ai_quick_check_title">AI quick check</string>
     <string name="alex_ai_auto">AI check on long-press space</string>
     <string name="alex_ai_auto_subtitle">Hold the space bar (without moving) to check the text with Claude (uses your AI key). Hold and drag still moves the cursor. Mistakes show as a red label in the bar; tap a wrong word to get its fix as the first suggestion. Not in password fields or incognito.</string>
     <string name="alex_swipe_log">Swipe log (diagnostics)</string>

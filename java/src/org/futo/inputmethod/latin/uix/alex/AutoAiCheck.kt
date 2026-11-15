@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import kotlinx.coroutines.Job
 import org.futo.inputmethod.latin.uix.SettingsKey
+import org.futo.inputmethod.latin.R
+import org.futo.inputmethod.latin.uix.Action
 
 val AutoAiCheckSetting = SettingsKey(booleanPreferencesKey("alex_ai_auto"), false)
 
@@ -53,6 +55,9 @@ object AutoAiCheck {
 
     // postavlja GeneralIME: ispravi sve nadjene greske u polju
     @Volatile var fixAllHandler: (() -> Unit)? = null
+
+    // postavlja GeneralIME: pokreni proveru (ikonica "AI brza provera")
+    @Volatile var runHandler: (() -> Boolean)? = null
 
     fun replacementFor(word: String): String? {
         if (word.isEmpty()) return null
@@ -115,3 +120,12 @@ fun AutoAiChip() {
         }
     }
 }
+
+// Ikonica "AI brza provera": stavi je kao Action key (pored ?123) u Edit actions.
+// Proverava tekst bez otvaranja prozora: oznaka u traci, crvena linija, ispravka u traci kad tapnes rec.
+val AiQuickCheckAction = Action(
+    icon = R.drawable.icon_spellcheck,
+    name = R.string.ai_quick_check_title,
+    windowImpl = null,
+    simplePressImpl = { _, _ -> AutoAiCheck.runHandler?.invoke() },
+)

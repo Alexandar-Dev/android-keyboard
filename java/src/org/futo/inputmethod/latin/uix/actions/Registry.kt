@@ -47,6 +47,7 @@ val AllActionsMap = mapOf(
     "font_typer" to FontTyperAction,
     "ai_check" to AiCheckAction, // alex
     "ai_translate" to AiTranslateAction, // alex
+    "ai_quick_check" to org.futo.inputmethod.latin.uix.alex.AiQuickCheckAction, // alex
 )
 
 val ActionToId = AllActionsMap.entries.associate { it.value to it.key }

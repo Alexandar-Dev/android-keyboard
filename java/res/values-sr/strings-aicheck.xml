@@ -2,6 +2,7 @@
 <!-- alex: AI provera (Claude API), srpski latinica -->
 <resources>
     <string name="ai_check_title">AI provera</string>
+    <string name="ai_quick_check_title">AI brza provera</string>
     <string name="ai_check_settings_title">AI provera (Claude)</string>
     <string name="ai_check_loading">Claude proverava pravopis i gramatiku…</string>
     <string name="ai_check_empty">U ovom polju nema teksta za proveru.</string>
