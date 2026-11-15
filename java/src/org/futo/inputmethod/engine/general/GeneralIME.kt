@@ -431,23 +431,21 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 throw e
             } catch(e: Exception) {
                 Log.e(TAG, "auto AI check failed", e)
-                A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Idle
+                A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Failed
                 return@launch
             }
-            // tekst promenjen dok je provera trajala -> rezultat vise ne vazi
-            if(readFieldTextForAi() != text) {
-                A.status.value = org.futo.inputmethod.latin.uix.alex.AutoAiStatus.Idle
-                return@launch
-            }
-            A.lastCheckedText = text
+            // alex: tekst je mogao malo da se promeni dok je provera trajala (npr. razmak posle drzanja);
+            // greske se traze u tekstu kakav je SADA, a ne odbacuju se
+            val now = readFieldTextForAi() ?: text
+            A.lastCheckedText = now
             A.issues = result.issues.mapNotNull {
                 val o = it.original ?: return@mapNotNull null
                 val r = it.replacement ?: return@mapNotNull null
-                if(o.isBlank() || o == r || !text.contains(o)) null
+                if(o.isBlank() || o == r || !now.contains(o)) null
                 else org.futo.inputmethod.latin.uix.alex.AutoIssue(o, r)
             }
             showAutoAiResult()
-            applyAutoAiUnderlines(text)
+            applyAutoAiUnderlines(now)
         }
         return true
     }

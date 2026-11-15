@@ -39,6 +39,7 @@ sealed class AutoAiStatus {
     object Checking : AutoAiStatus()
     data class Errors(val n: Int) : AutoAiStatus()
     object Ok : AutoAiStatus()
+    object Failed : AutoAiStatus()   // AI nije odgovorio (mreza, kljuc...)
 }
 
 object AutoAiCheck {
@@ -100,6 +101,7 @@ fun AutoAiChip() {
             ChipRed, ChipRedBg
         )
         AutoAiStatus.Ok -> Triple("✓ OK", ChipGreen, ChipGreenBg)
+        AutoAiStatus.Failed -> Triple("AI nije odgovorio", ChipGrey, ChipGreyBg)
     }
     Box(Modifier.fillMaxHeight().padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
         Box(
