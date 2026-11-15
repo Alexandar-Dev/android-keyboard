@@ -530,8 +530,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 } catch(e: Exception) {
                     if(e is CancellationException) throw e
                     Log.e(TAG, "swipe rescore failed", e)
-                    dbg?.append("greska: ").append(e.toString()).append('
-')
+                    dbg?.append("greska: ").append(e.toString()).append('\n')
                     null
                 } finally {
                     languageModelFacilitator.swipeDebug = null
@@ -549,14 +548,10 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                         it.mWord + (if(it.mOriginatesFromTransformerLM) "[T]" else if(it.mOriginatesFromSwipeModel) "[S]" else "")
                     }
                     org.futo.inputmethod.latin.uix.alex.SwipeLog.append(context,
-                        head + "
-recnik: " + org.futo.inputmethod.latin.uix.alex.SwipeLog.dictionaryLabel(
+                        head + "\nrecnik: " + org.futo.inputmethod.latin.uix.alex.SwipeLog.dictionaryLabel(
                             context, languageModelFacilitator.dictionaryFacilitator.primaryLocale) +
-                        "
-transformer: " + languageModelFacilitator.modelLabel() +
-                        "
-pre kursora: [" + (before ?: "") + "]
-" + dbg.toString() + "prikazano: " + shown)
+                        "\ntransformer: " + languageModelFacilitator.modelLabel() +
+                        "\npre kursora: [" + (before ?: "") + "]\n" + dbg.toString() + "prikazano: " + shown)
                 }
 
                 // alex: red za sledecu rec (ako je ukljucen)

@@ -442,8 +442,7 @@ public class LanguageModelFacilitator(
     // alex: kad je swipe log ukljucen, GeneralIME ovde postavi bafer i rescoreSwipe upisuje sta radi
     @Volatile var swipeDebug: StringBuilder? = null
     fun modelLabel(): String = languageModel?.modelInfoLoader?.let { "${it.name} (${it.path.name})" } ?: "nije ucitan"
-    private fun dbg(s: String) { swipeDebug?.append(s)?.append('
-') }
+    private fun dbg(s: String) { swipeDebug?.append(s)?.append('\n') }
 
     suspend fun rescoreSwipe(dict: SuggestedWords): SuggestedWords? {
         if(shouldPassThroughToLegacy()) { dbg("preskoceno: transformer nije za ovaj jezik/raspored"); return null }
