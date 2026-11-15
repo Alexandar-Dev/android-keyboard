@@ -465,7 +465,10 @@ public class LanguageModelFacilitator(
         val first = top0.first()
         val top = top0 + extra.map {
             SuggestedWordInfo(it, "", first.mScore, SuggestedWordInfo.KIND_CORRECTION, first.mSourceDict,
-                SuggestedWordInfo.NOT_AN_INDEX, SuggestedWordInfo.NOT_A_CONFIDENCE)
+                SuggestedWordInfo.NOT_AN_INDEX, SuggestedWordInfo.NOT_A_CONFIDENCE).apply {
+                // ravna linija u traci: rec je ubacio transformer, ne swipe dekoder
+                mOriginatesFromTransformerLM = true
+            }
         }
         if(top.size < 2) return null
 
