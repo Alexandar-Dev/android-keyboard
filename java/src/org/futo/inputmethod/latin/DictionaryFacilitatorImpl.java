@@ -173,6 +173,9 @@ public class DictionaryFacilitatorImpl implements DictionaryFacilitator {
         // typing in. For now, this is simply the number of times a word from this language
         // has been committed in a row.
         private int mConfidence = 0;
+        // alex: koliko reci zaredom NIJE iz ovog jezika; tek posle 2 se poverenje brise
+        // (jedna engleska rec, npr. "I", ne gasi srpski transformer usred srpske recenice)
+        private int mMissesInRow = 0;
 
         public float mWeightForTypingInLocale = WEIGHT_FOR_MOST_PROBABLE_LANGUAGE;
         public float mWeightForGesturingInLocale = WEIGHT_FOR_MOST_PROBABLE_LANGUAGE;
@@ -653,8 +656,11 @@ public class DictionaryFacilitatorImpl implements DictionaryFacilitator {
                 for (DictionaryGroup dictionaryGroup : mDictionaryGroups) {
                     if (dictionariesValidForWord.contains(dictionaryGroup)) {
                         dictionaryGroup.mConfidence += 1;
+                        dictionaryGroup.mMissesInRow = 0;
                     } else {
-                        dictionaryGroup.mConfidence = 0;
+                        dictionaryGroup.mMissesInRow += 1;
+                        if (dictionaryGroup.mMissesInRow >= 2) dictionaryGroup.mConfidence = 0;
+                        else dictionaryGroup.mConfidence = Math.max(0, dictionaryGroup.mConfidence - 1);
                     }
                 }
             }

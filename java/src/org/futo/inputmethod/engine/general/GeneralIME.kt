@@ -548,7 +548,8 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                         it.mWord + (if(it.mOriginatesFromTransformerLM) "[T]" else if(it.mOriginatesFromSwipeModel) "[S]" else "")
                     }
                     org.futo.inputmethod.latin.uix.alex.SwipeLog.append(context,
-                        head + "\nrecnik: " + org.futo.inputmethod.latin.uix.alex.SwipeLog.dictionaryLabel(
+                        head + "\njezik: " + languageModelFacilitator.dictionaryFacilitator.mostConfidentLocale +
+                        "\nrecnik: " + org.futo.inputmethod.latin.uix.alex.SwipeLog.dictionaryLabel(
                             context, languageModelFacilitator.dictionaryFacilitator.primaryLocale) +
                         "\ntransformer: " + languageModelFacilitator.modelLabel() +
                         "\npre kursora: [" + (before ?: "") + "]\n" + dbg.toString() + "prikazano: " + shown)
