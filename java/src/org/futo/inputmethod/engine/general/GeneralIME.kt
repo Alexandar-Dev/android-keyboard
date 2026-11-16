@@ -632,6 +632,12 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                         helper.keyboardSwitcher,
                         swipeDistinct
                     )
+                    // alex: swipe log: ukupno od kraja poteza do reci u tekstu
+                    alexPendingLog?.let { rec ->
+                        alexPendingLog = null
+                        alexFlushSwipeLog(rec, "\nukupno: od kraja poteza do reci u tekstu %d ms".format(
+                            android.os.SystemClock.uptimeMillis() - alexSwipeEndAt))
+                    }
 
                     if(settings.current.mVibrateOn) {
                         helper.keyboardSwitcher.mainKeyboardView?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY_RELEASE)
@@ -676,6 +682,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             lmResult = lmResultHolder.get(null, 350L)
             if(lmResult == null) languageModelFacilitator.reportTimeout()
         } else {
+            val alexDec0 = android.os.SystemClock.uptimeMillis()
             inputLogic.getSuggestedWords(
                 settings.current,
                 helper.keyboardSwitcher.keyboard ?: return,
@@ -683,6 +690,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 inputStyle,
                 sequenceNumber
             ) { suggestedWords -> dictResult = suggestedWords }
+            alexDecoderMs = android.os.SystemClock.uptimeMillis() - alexDec0
 
             // alex: swipe kandidate ponovo rangira transformer (ako stigne na vreme)
             val swiped = dictResult
@@ -717,8 +725,12 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                     val shown = dictResult?.mSuggestedWordInfoList?.take(6)?.joinToString(" ") {
                         it.mWord + (if(it.mOriginatesFromTransformerLM) "[T]" else if(it.mOriginatesFromSwipeModel) "[S]" else "")
                     }
-                    org.futo.inputmethod.latin.uix.alex.SwipeLog.append(context,
-                        head + "\njezik: " + languageModelFacilitator.dictionaryFacilitator.mostConfidentLocale +
+                    val sinceEnd = android.os.SystemClock.uptimeMillis() - alexSwipeEndAt
+                    val timing = "\nvreme: dekoder %d ms, transformer %d ms, ostalo %d ms (od toga cekanje u redu %d ms)".format(
+                        alexDecoderMs, ms, sinceEnd - alexDecoderMs - ms, alexWaitMs)
+                    alexPendingLog?.let { alexFlushSwipeLog(it, "\nukupno: nije prikazano") }
+                    alexPendingLog = (
+                        head + timing + "\njezik: " + languageModelFacilitator.dictionaryFacilitator.mostConfidentLocale +
                         "\nrecnik: " + org.futo.inputmethod.latin.uix.alex.SwipeLog.dictionaryLabel(
                             context, languageModelFacilitator.dictionaryFacilitator.primaryLocale) +
                         "\ntransformer: " + languageModelFacilitator.modelLabel() +
@@ -773,6 +785,18 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
     private val sequenceIdCompleted = AtomicInteger(0)
     private val computationMutex = Mutex()
     private var timeTakenToUpdate = 40L
+
+    // alex: merenje vremena swipe-a za log (sve u uptimeMillis)
+    @Volatile private var alexSwipeEndAt = 0L
+    @Volatile private var alexWaitMs = -1L
+    @Volatile private var alexDecoderMs = -1L
+    @Volatile private var alexPendingLog: String? = null
+
+    private fun alexFlushSwipeLog(rec: String, tail: String) {
+        helper.lifecycleScope.launch(Dispatchers.IO) {
+            org.futo.inputmethod.latin.uix.alex.SwipeLog.append(context, rec + tail)
+        }
+    }
     fun updateSuggestions(inputStyle: Int) {
         updateSuggestionJob?.cancel()
         if(inputStyle == SuggestedWords.INPUT_STYLE_TYPING) NextWordRowState.clear() // alex
@@ -802,6 +826,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             else -> 40L.coerceAtMost(timeTakenToUpdate / 2).coerceAtLeast(16L)
         }
 
+        val alexQueuedAt = android.os.SystemClock.uptimeMillis()
         updateSuggestionJob = helper.lifecycleScope.launch {
             when(inputStyle) {
                 SuggestedWords.INPUT_STYLE_TYPING -> delay(delayTime)
@@ -810,6 +835,8 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 computationMutex.withLock {
                     // double check in case sequence id incremented after we acquired scope
                     if (sequenceId.get() > seqId) return@withContext
+                    if(inputStyle == SuggestedWords.INPUT_STYLE_TAIL_BATCH)
+                        alexWaitMs = android.os.SystemClock.uptimeMillis() - alexQueuedAt
 
                     val t0 = System.currentTimeMillis()
                     updateSuggestionsDictionaryInternal(inputStyle, seqId)
@@ -862,6 +889,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
     }
 
     override fun onEndBatchInput(batchPointers: InputPointers?) {
+        alexSwipeEndAt = android.os.SystemClock.uptimeMillis() // alex: merenje za swipe log
         inputLogic.onEndBatchInput(batchPointers)
     }
 
