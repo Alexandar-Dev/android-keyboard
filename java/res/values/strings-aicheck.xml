@@ -32,6 +32,8 @@
     <string name="alex_swipe_lm_weight">Transformer strength for swipe</string>
     <string name="alex_swipe_lm_weight_subtitle">How much the transformer reorders swipe suggestions by the sentence. 0 = off, 0.3 = default, higher = trusts the sentence more than the swipe path.</string>
     <string name="alex_swipe_lm_weight_off">off</string>
+    <string name="alex_swipe_candidates">Swipe candidates for the transformer</string>
+    <string name="alex_swipe_candidates_subtitle">How many words the swipe decoder returns for the transformer to choose from. 4 = FUTO default. More = finds the right word more often, but swipe can be a bit slower.</string>
     <string name="alex_transformer_non_qwerty">Transformer on non-QWERTY layouts</string>
     <string name="alex_transformer_non_qwerty_subtitle">Needed for Serbian QWERTZ (with š, đ, č, ć, ž)</string>
     <string name="alex_next_word_row">Next-word row after swipe</string>

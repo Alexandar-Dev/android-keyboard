@@ -33,6 +33,8 @@
     <string name="alex_swipe_lm_weight">Jačina transformera za swipe</string>
     <string name="alex_swipe_lm_weight_subtitle">Koliko transformer preuređuje swipe predloge prema rečenici. 0 = isključeno, 0,3 = podrazumevano, više = više veruje rečenici nego putanji prsta.</string>
     <string name="alex_swipe_lm_weight_off">isključeno</string>
+    <string name="alex_swipe_candidates">Broj swipe kandidata za transformer</string>
+    <string name="alex_swipe_candidates_subtitle">Koliko reči swipe dekoder vraća da transformer bira između njih. 4 = FUTO podrazumevano. Više = češće nađe pravu reč, ali swipe može biti malo sporiji.</string>
     <string name="alex_transformer_non_qwerty">Transformer i za ne-QWERTY rasporede</string>
     <string name="alex_transformer_non_qwerty_subtitle">Potrebno za srpski QWERTZ (sa š, đ, č, ć, ž)</string>
     <string name="alex_next_word_row">Red za sledeću reč posle swipe-a</string>

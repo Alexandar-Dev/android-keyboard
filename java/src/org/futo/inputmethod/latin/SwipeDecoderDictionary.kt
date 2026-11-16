@@ -457,7 +457,8 @@ class SwipeDecoderDictionary(val context: Context, val locale: Locale) : Diction
             else -> BeamValues.highBeam
         }
 
-        val topK = if(useHighBeam) 4 else 1
+        // alex: broj kandidata iz podesavanja (FUTO: fiksno 4)
+        val topK = if(useHighBeam) org.futo.inputmethod.latin.xlm.swipeCandidateCount(context) else 1
 
         val results = synchronized(BinaryDictionary.sTrieUsageLock) {
             if(appliedTries?.isEmpty() != false) {

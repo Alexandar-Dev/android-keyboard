@@ -45,6 +45,18 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
             steps = 19
         )
 
+        // alex: broj swipe kandidata koje transformer vidi
+        SettingSlider(
+            title = stringResource(R.string.alex_swipe_candidates),
+            subtitle = stringResource(R.string.alex_swipe_candidates_subtitle),
+            setting = org.futo.inputmethod.latin.xlm.SwipeCandidatesSetting,
+            range = 4.0f .. 16.0f,
+            hardRange = 4.0f .. 16.0f,
+            transform = { kotlin.math.round(it) },
+            indicator = { "${kotlin.math.round(it).toInt()}" },
+            steps = 11
+        )
+
         SettingToggleDataStore(
             title = stringResource(R.string.alex_next_word_row),
             subtitle = stringResource(R.string.alex_next_word_row_subtitle),

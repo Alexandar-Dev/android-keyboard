@@ -50,6 +50,14 @@ val AllowTransformerOnNonQWERTYLayouts = SettingsKey(
     true
 )
 
+// alex: koliko kandidata swipe dekoder vraca (i transformer ocenjuje); FUTO je imao fiksno 4
+val SwipeCandidatesSetting = SettingsKey(
+    floatPreferencesKey("alex_swipe_candidates"),
+    4f
+)
+fun swipeCandidateCount(context: android.content.Context): Int =
+    context.getSetting(SwipeCandidatesSetting).let { kotlin.math.round(it).toInt() }.coerceIn(4, 16)
+
 // alex: koliko transformer utice na redosled swipe kandidata (0 = iskljuceno)
 val SwipeLmWeightSetting = SettingsKey(
     floatPreferencesKey("alex_swipe_lm_weight"),
@@ -135,7 +143,6 @@ private fun levenshteinDistance(s1: String, s2: String): Int {
 
 
 // alex: podesavanje swipe + transformer
-private const val SWIPE_RESCORE_TOP_N = 8
 private const val SWIPE_LM_SPAN_NATS = 10.0f  // razlika log-verovatnoce koja daje punu kaznu
 private const val SWIPE_SCORE_SPAN = 4000f    // razlika skora dekodera koja daje ocenu putanje 0 (najbolji = 1)
 // alex: reci koje predvidi transformer, a odgovaraju putanji swipe-a
@@ -467,10 +474,10 @@ public class LanguageModelFacilitator(
         val ngramContext = inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
             settings.current.mSpacingAndPunctuations, 2
         )
-        val top0 = list.take(SWIPE_RESCORE_TOP_N)
+        val top0 = list.take(swipeCandidateCount(context))
         if(swipeDebug != null) {
             dbg("kontekst: [${ngramContext.extractPrevWordsContext()}]")
-            dbg("dekoder: " + list.take(12).joinToString(" ") { "${it.mWord}(${it.mScore})" })
+            dbg("dekoder: " + list.take(16).joinToString(" ") { "${it.mWord}(${it.mScore})" })
         }
 
         // alex: reci koje transformer ocekuje, a putanja im odgovara, dodaju se medju kandidate
