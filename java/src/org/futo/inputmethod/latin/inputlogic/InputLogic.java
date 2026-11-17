@@ -436,6 +436,25 @@ public final class InputLogic {
             final int currentKeyboardScriptId) {
         final SuggestedWords suggestedWords = mSuggestedWords;
         final String suggestion = suggestionInfo.mWord;
+        // alex: swipe log - koja rec je tapnuta u traci i sa kog mesta
+        try {
+            final java.util.ArrayList<String> alexList = new java.util.ArrayList<>();
+            int alexPos = -1;
+            for (int i = 0; i < suggestedWords.size(); i++) {
+                final SuggestedWordInfo wi = suggestedWords.getInfo(i);
+                alexList.add(wi.mWord + (wi.mOriginatesFromTransformerLM ? "[T]" : ""));
+                if (alexPos < 0 && wi == suggestionInfo) alexPos = i;
+            }
+            if (alexPos < 0) alexPos = alexList.indexOf(suggestion);
+            final CharSequence alexBefore = mConnection.getTextBeforeCursor(80, 0);
+            org.futo.inputmethod.latin.uix.alex.SwipeLog.INSTANCE.pick(mImeHelper.getContext(),
+                    !settingsValues.mInputAttributes.mIsPasswordField
+                            && !settingsValues.mInputAttributes.mNoLearning
+                            && settingsValues.isPersonalizationEnabled(),
+                    suggestion + (suggestionInfo.mOriginatesFromTransformerLM ? "[T]" : ""),
+                    "traka", alexPos, alexList,
+                    alexBefore == null ? null : alexBefore.toString());
+        } catch (Exception ignored) { }
         // If this is a punctuation picked from the suggestion strip, pass it to onCodeInput
         if (suggestion.length() == 1 && suggestedWords.isPunctuationSuggestions()) {
             // We still want to log a suggestion click.

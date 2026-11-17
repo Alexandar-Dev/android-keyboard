@@ -94,6 +94,17 @@ fun NextWordRow(manager: KeyboardManagerForAction) {
                         }
                         .clickable {
                             manager.performHapticAndAudioFeedback(Constants.CODE_TAB, view)
+                            // alex: swipe log - tap u drugom redu
+                            try {
+                                val sv = org.futo.inputmethod.latin.settings.Settings.getInstance().current
+                                val ime = manager.getLatinIMEForDebug()
+                                SwipeLog.pick(
+                                    ime, !sv.mInputAttributes.mIsPasswordField &&
+                                        !sv.mInputAttributes.mNoLearning && sv.isPersonalizationEnabled,
+                                    w, "drugi red", i, words,
+                                    ime.currentInputConnection?.getTextBeforeCursor(80, 0)?.toString()
+                                )
+                            } catch (_: Exception) { }
                             NextWordRowState.clear()
                             // razmak ispred ako prethodna rec nije odvojena (tap, tap -> "rec1 rec2")
                             val prev = manager.getLatinIMEForDebug().currentInputConnection

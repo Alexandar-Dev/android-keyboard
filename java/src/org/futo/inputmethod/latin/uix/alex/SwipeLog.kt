@@ -3,6 +3,7 @@ package org.futo.inputmethod.latin.uix.alex
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import org.futo.inputmethod.latin.uix.SettingsKey
+import org.futo.inputmethod.latin.uix.getSetting
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -59,6 +60,22 @@ object SwipeLog {
             }
             dictLabel
         } catch (e: Exception) { "greska: $e" }
+    }
+
+    // alex: tap na predlog (gornja traka ili drugi red) -> red u logu.
+    // allowed = false u poljima za lozinku / inkognito.
+    private val pickExec = java.util.concurrent.Executors.newSingleThreadExecutor()
+
+    fun pick(ctx: Context, allowed: Boolean, word: String, source: String, pos: Int,
+             list: List<String>, before: String?) {
+        if (!allowed) return
+        try {
+            if (!ctx.getSetting(SwipeLogSetting)) return
+        } catch (_: Exception) { return }
+        val rec = "izabrano: $word ($source, mesto ${pos + 1})" +
+            (if (list.isNotEmpty()) "\nlista: " + list.joinToString(" ") else "") +
+            "\npre kursora: [" + (before ?: "?").takeLast(80).replace("\n", " ") + "]"
+        pickExec.execute { append(ctx, rec) }
     }
 
     fun sizeKb(ctx: Context): Long = try {
