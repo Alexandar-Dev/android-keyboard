@@ -2225,6 +2225,12 @@ public final class InputLogic {
         final String committedWordString = committedWord.toString();
         final int cancelLength = committedWord.length();
         final String separatorString = mLastComposedWord.mSeparatorString;
+        // alex: swipe log - backspace vratio automatsku ispravku / swipe rec
+        try {
+            org.futo.inputmethod.latin.uix.alex.SwipeLog.INSTANCE.event(mImeHelper.getContext(),
+                    alexLogAllowed(settingsValues),
+                    "vraceno: " + committedWordString + " -> " + originallyTypedWordString);
+        } catch (Exception ignored) { }
         // If our separator is a space, we won't actually commit it,
         // but set the space state to PHANTOM so that a space will be inserted
         // on the next keypress
@@ -2715,6 +2721,13 @@ public final class InputLogic {
         }
     }
 
+    // alex: log samo van lozinki / inkognita
+    private static boolean alexLogAllowed(final SettingsValues settingsValues) {
+        return !settingsValues.mInputAttributes.mIsPasswordField
+                && !settingsValues.mInputAttributes.mNoLearning
+                && settingsValues.isPersonalizationEnabled();
+    }
+
     /**
      * Commit the current auto-correction.
      *
@@ -2752,6 +2765,28 @@ public final class InputLogic {
             final boolean isBatchMode = mWordComposer.isBatchMode();
             commitChosenWord(settingsValues, stringToCommit,
                     LastComposedWord.COMMIT_TYPE_DECIDED_WORD, separator, 0);
+            // alex: swipe log - kucanje: sta je otkucano, sta je upisano i odakle je ispravka
+            if (!isBatchMode) {
+                try {
+                    final SuggestedWords alexSw = mSuggestedWords;
+                    final StringBuilder alexList = new StringBuilder();
+                    for (int i = 0; alexSw != null && i < alexSw.size() && i < 6; i++) {
+                        final SuggestedWordInfo wi = alexSw.getInfo(i);
+                        if (i > 0) alexList.append(' ');
+                        alexList.append(wi.mWord).append(wi.mOriginatesFromTransformerLM ? "[T]" : "");
+                    }
+                    final String alexKind = typedWord.equals(stringToCommit) ? "bez promene"
+                            : (autoCorrectionOrNull != null && autoCorrectionOrNull.mOriginatesFromTransformerLM
+                                    ? "ispravka transformer" : "ispravka recnik");
+                    final CharSequence alexBefore = mConnection.getTextBeforeCursor(80, 0);
+                    org.futo.inputmethod.latin.uix.alex.SwipeLog.INSTANCE.event(mImeHelper.getContext(),
+                            alexLogAllowed(settingsValues),
+                            "kucanje: " + typedWord + " -> " + stringToCommit + " (" + alexKind + ")"
+                                    + "\nlista: " + alexList
+                                    + "\npre kursora: [" + (alexBefore == null ? "?"
+                                    : alexBefore.toString().replace("\n", " ")) + "]");
+                } catch (Exception ignored) { }
+            }
             if (!typedWord.equals(stringToCommit)) {
                 // This will make the correction flash for a short while as a visual clue
                 // to the user that auto-correction happened. It has no other effect; in particular

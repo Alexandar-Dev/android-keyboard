@@ -78,6 +78,16 @@ object SwipeLog {
         pickExec.execute { append(ctx, rec) }
     }
 
+    // alex: kucanje - rec potvrdjena razmakom/znakom (automatska ispravka ili ostavljena kako je
+    // otkucana) i vracanje ispravke backspace-om. allowed = false u lozinkama / inkognito.
+    fun event(ctx: Context, allowed: Boolean, rec: String) {
+        if (!allowed) return
+        try {
+            if (!ctx.getSetting(SwipeLogSetting)) return
+        } catch (_: Exception) { return }
+        pickExec.execute { append(ctx, rec) }
+    }
+
     fun sizeKb(ctx: Context): Long = try {
         (file(ctx).length() + File(file(ctx).parentFile, "swipe_log_staro.txt").length()) / 1024
     } catch (_: Exception) { 0 }
