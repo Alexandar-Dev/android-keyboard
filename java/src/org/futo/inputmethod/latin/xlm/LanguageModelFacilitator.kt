@@ -236,6 +236,12 @@ public class LanguageModelFacilitator(
         return languageModel
     }
 
+    // alex: licni recnik kao kod kucanja (Glossary na pocetku konteksta) - i swipe ga salje, pa model
+    // ne mora iz pocetka da racuna kontekst svaki put kad se smenjuju kucanje i swipe
+    private fun personalWords(): List<String> = try {
+        dictionaryFacilitator.primaryLocale?.let { l -> userDictionary.getWords(listOf(l)).map { it.word } } ?: emptyList()
+    } catch(e: Exception) { emptyList() }
+
     private suspend fun runLanguageModel(values: PredictionInputValues): ArrayList<SuggestedWordInfo>? {
         if(prepareLanguageModel() == null) return null
         val locale = dictionaryFacilitator.primaryLocale ?: return null
@@ -480,7 +486,7 @@ public class LanguageModelFacilitator(
         val ngram = if(rawContext == null) inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
             settings.current.mSpacingAndPunctuations, 2
         ) else null
-        return lm.predictNextWords(ngram, rawContext, afterWord, prox)
+        return lm.predictNextWords(ngram, rawContext, afterWord, prox, personalWords())
     }
 
     // alex: swipe kandidate iz recnika ponovo rangira transformer (verovatnoca reci u kontekstu).
@@ -539,7 +545,7 @@ public class LanguageModelFacilitator(
         }
         if(top.size < 2) { dbg("preskoceno: samo jedan kandidat"); return null }
 
-        val lp = lm.scoreWords(ngramContext, top.map { it.mWord })
+        val lp = lm.scoreWords(ngramContext, top.map { it.mWord }, personalWords())
         if(lp == null || lp.size != top.size) { dbg("preskoceno: scoreWords nije uspeo"); return null }
         dbg("lm kontekst: ${lm.lastContextChars} znakova")
 
@@ -592,7 +598,7 @@ public class LanguageModelFacilitator(
     ): List<String> {
         val kb = keyboardSwitcher.keyboard ?: return emptyList()
         val prox = kb.proximityInfo?.nativeProximityInfo ?: return emptyList()
-        val predicted = lm.predictNextWords(ngram, null, null, prox)
+        val predicted = lm.predictNextWords(ngram, null, null, prox, personalWords())
         val ok = ArrayList<String>()
         val why = ArrayList<String>()
         for(w in predicted) {

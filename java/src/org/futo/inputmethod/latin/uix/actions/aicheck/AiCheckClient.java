@@ -256,10 +256,6 @@ public final class AiCheckClient {
             .build();
     }
 
-    public static final class TopicResult {
-        public java.util.List<String> words;
-    }
-
     public static java.util.List<String> topicWords(String apiKey, String model, String text) throws AiCheckException {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new AiCheckException(ErrorKind.NO_KEY, "No API key", null);
@@ -291,13 +287,19 @@ public final class AiCheckClient {
             for (ContentBlock block : response.content()) {
                 block.text().ifPresent(t -> json.append(t.text()));
             }
-            TopicResult r;
+            // citanje preko stabla (bez klase): R8 je klasu za rezultat spojio sa drugom pa je Jackson pucao
+            java.util.List<String> words = new java.util.ArrayList<>();
             try {
-                r = MAPPER.readValue(json.toString(), TopicResult.class);
+                com.fasterxml.jackson.databind.JsonNode arr = MAPPER.readTree(json.toString()).get("words");
+                if (arr != null && arr.isArray()) {
+                    for (com.fasterxml.jackson.databind.JsonNode n : arr) {
+                        if (n.isTextual()) words.add(n.asText());
+                    }
+                }
             } catch (Exception e) {
                 throw new AiCheckException(ErrorKind.OTHER, "Bad JSON: " + e.getMessage(), e);
             }
-            return r.words == null ? new java.util.ArrayList<>() : r.words;
+            return words;
         } catch (UnauthorizedException | PermissionDeniedException e) {
             throw new AiCheckException(ErrorKind.BAD_KEY, e.getMessage(), e);
         } catch (RateLimitException e) {

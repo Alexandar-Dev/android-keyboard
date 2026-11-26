@@ -29,7 +29,7 @@
     <string name="ai_check_model_opus">Claude Opus 5.5 (najbolji, oko 1 cent po proveri)</string>
     <string name="ai_check_model_sonnet">Claude Sonnet 5.5 (brži, oko 0,5 centa)</string>
     <string name="ai_check_model_haiku">Claude Haiku 5.5 (najbrži, ispod 0,1 centa)</string>
-    <string name="ai_check_privacy">Tekst ide Anthropic-u samo kad pritisneš AI. Objašnjenja su na jeziku teksta.</string>
+    <string name="ai_check_privacy">AI provera šalje tekst Anthropic-u samo kad pritisneš AI. Ako je AI tema uključena, tekst se šalje i u pozadini dok kucaš. Objašnjenja su na jeziku teksta.</string>
     <string name="alex_swipe_lm_weight">Jačina transformera za swipe</string>
     <string name="alex_swipe_lm_weight_subtitle">Koliko transformer preuređuje swipe predloge prema rečenici. 0 = isključeno, 0,3 = podrazumevano, više = više veruje rečenici nego putanji prsta.</string>
     <string name="alex_swipe_lm_weight_off">isključeno</string>
@@ -78,4 +78,5 @@
     <string name="alex_ai_usage_title">AI potrošnja</string>
     <string name="alex_ai_usage_today">Zahteva danas: %1$d · trošak danas: %2$s</string>
     <string name="alex_ai_usage_month">Ovaj mesec: %1$d zahteva · %2$s</string>
+    <string name="alex_ai_usage_estimate">Približno mesečno ovim tempom: %1$s</string>
 </resources>

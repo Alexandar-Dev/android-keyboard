@@ -77,6 +77,8 @@ private fun UsageStatus() {
         Text(stringResource(R.string.alex_ai_usage_today, st.dayCount, AiUsage.money(st.dayCost)))
         Text(stringResource(R.string.alex_ai_usage_month, st.monthCount, AiUsage.money(st.monthCost)),
             style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.alex_ai_usage_estimate, AiUsage.money(AiUsage.monthlyEstimate(st))),
+            style = MaterialTheme.typography.bodySmall)
     }
 }
 

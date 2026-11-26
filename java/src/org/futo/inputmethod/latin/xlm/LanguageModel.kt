@@ -399,7 +399,8 @@ class LanguageModel(
         ngramContext: NgramContext?,
         rawContext: String?,
         lastWord: String?,
-        proximityInfoHandle: Long
+        proximityInfoHandle: Long,
+        personalDictionary: List<String> = emptyList()
     ): List<String> = withContext(LanguageModelScope) {
         if(!loadModelIfNeeded()) return@withContext emptyList()
         val composeInfo = ComposeInfo(partialWord = "", xCoords = IntArray(0), yCoords = IntArray(0), inputMode = 0)
@@ -408,6 +409,8 @@ class LanguageModel(
             ?: return@withContext emptyList()
         if(!lastWord.isNullOrBlank()) context = context.trimEnd() + " " + lastWord.trim()
         context = safeguardContext(context.trim())
+        // alex: isti pocetak (Glossary) kao kod kucanja, da model ponovo koristi vec izracunat kontekst
+        context = addPersonalDictionary(context, personalDictionary)
         return@withContext getSuggestionsInternal(proximityInfoHandle, context, composeInfo, 0.0f, arrayOf())
             .map { it.mWord.trim() }
             .filter { w -> w.isNotEmpty() && w.any { it.isLetter() } }
@@ -418,12 +421,14 @@ class LanguageModel(
     // alex: log-verovatnoca svake reci (swipe kandidati) posle konteksta
     suspend fun scoreWords(
         ngramContext: NgramContext,
-        words: List<String>
+        words: List<String>,
+        personalDictionary: List<String> = emptyList()
     ): FloatArray? = withContext(LanguageModelScope) {
         if(!loadModelIfNeeded()) return@withContext null
         if(words.isEmpty()) return@withContext null
         val composeInfo = ComposeInfo(partialWord = "", xCoords = IntArray(0), yCoords = IntArray(0), inputMode = 0)
-        val context = safeguardContext(getContext(composeInfo, ngramContext))
+        // alex: isti pocetak (Glossary) kao kod kucanja, da model ponovo koristi vec izracunat kontekst
+        val context = addPersonalDictionary(safeguardContext(getContext(composeInfo, ngramContext)), personalDictionary)
         val n = words.size.coerceAtMost(16)
         val out = FloatArray(n)
         scoreWordsNative(mNativeState, context, words.take(n).toTypedArray(), out)
