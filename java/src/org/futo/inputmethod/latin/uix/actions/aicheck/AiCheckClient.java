@@ -51,6 +51,11 @@ public final class AiCheckClient {
         + "A mis-swipe can also produce a real word that makes no sense in the sentence "
         + "(e.g. \"Ok ajde iva da to uradimo\" where \"iva\" should be \"sad\"): flag such words too, "
         + "with the word that fits the sentence and is close on the keyboard. "
+        + "If a <swipe_alternatives> section follows the text, each line is a swiped word from the text and the "
+        + "other words the keyboard offered for the same swipe. When one of those alternatives fits the sentence "
+        + "clearly better (meaning, grammar, case), flag the word with that alternative as the replacement "
+        + "(e.g. \"Ste uradili?\" with alternatives \"Šta, Sta\" -> \"Šta\" if the sentence is a question about what was done). "
+        + "Do not flag a word only because alternatives exist. "
         + "Apart from that, only real mistakes: keep the user's style, "
         + "slang, word choice, tone and informal register. Do not rewrite sentences, do not suggest "
         + "stylistic improvements, and ignore missing capitalization or a missing final period in casual chat messages.\n"
@@ -111,6 +116,17 @@ public final class AiCheckClient {
         } catch (RuntimeException ignored) { }
     }
 
+    // alex: tekst + (ako postoje) reci koje je swipe jos ponudio za svaku svajpovanu rec
+    private static String checkMessage(String text) {
+        String hints = null;
+        try {
+            hints = org.futo.inputmethod.latin.uix.alex.SwipeAlternatives.hintsFor(text);
+        } catch (RuntimeException ignored) { }
+        String msg = "<text>" + NL + text + NL + "</text>";
+        if (hints != null) msg += NL + "<swipe_alternatives>" + NL + hints + NL + "</swipe_alternatives>";
+        return msg;
+    }
+
     public static AiCheckResult check(String apiKey, String model, String text) throws AiCheckException {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new AiCheckException(ErrorKind.NO_KEY, "No API key", null);
@@ -131,7 +147,7 @@ public final class AiCheckClient {
                     .effort(OutputConfig.Effort.LOW)
                     .format(JsonOutputFormat.builder().schema(SCHEMA).build())
                     .build())
-                .addUserMessage("<text>" + NL + text + NL + "</text>")
+                .addUserMessage(checkMessage(text))
                 .build();
 
             Message response = client.messages().create(params);

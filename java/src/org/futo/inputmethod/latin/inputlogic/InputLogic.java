@@ -461,6 +461,7 @@ public final class InputLogic {
                     && alexLogAllowed(settingsValues)) {
                 final String alexFirst = suggestedWords.getInfo(0).mWord;
                 if (!alexFirst.equals(suggestion)) {
+                    org.futo.inputmethod.latin.uix.alex.SwipeAlternatives.picked(alexFirst, suggestion);
                     // tekst pre kursora bez aktivne (swipe) reci -> ista prethodna rec kao pri primeni
                     final CharSequence alexTb = mConnection.getTextBeforeCursor(80 + alexFirst.length(), 0);
                     String alexBeforeWord = alexTb == null ? "" : alexTb.toString();

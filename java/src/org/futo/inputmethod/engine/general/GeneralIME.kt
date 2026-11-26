@@ -735,6 +735,15 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 } catch(e: Exception) {
                     if(e is CancellationException) throw e
                 }
+                // alex: za AI proveru zapamti sta je jos ponudjeno za ovu swipe rec
+                try {
+                    dictResult?.let { dr ->
+                        val ws = dr.mSuggestedWordInfoList.map { it.mWord }
+                        if(ws.isNotEmpty()) org.futo.inputmethod.latin.uix.alex.SwipeAlternatives.record(ws[0], ws.drop(1))
+                    }
+                } catch(e: Exception) {
+                    if(e is CancellationException) throw e
+                }
                 if(dbg != null) {
                     val ms = System.currentTimeMillis() - t0
                     val head = "podesavanja: swipe=%.2f a=%.1f T=%.1f ctx=%d tema=%.1f | vreme %d ms%s".format(
