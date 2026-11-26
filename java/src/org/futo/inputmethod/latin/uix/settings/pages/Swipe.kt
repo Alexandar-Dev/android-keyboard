@@ -298,6 +298,20 @@ val SwipeMenu = UserSettingsMenu(
             setting = org.futo.inputmethod.latin.uix.alex.FormFixSetting
         ),
 
+        // alex: Transformer swipe (premesteno iz Advanced Parameters)
+        userSettingDecorationOnly {
+            ScreenTitle(stringResource(R.string.alex_swipe_transformer_title))
+        },
+        UserSetting(name = R.string.alex_swipe_lm_weight) { org.futo.inputmethod.latin.uix.alex.SwipeTransformerWeightSetting() },
+        UserSetting(name = R.string.alex_swipe_candidates) { org.futo.inputmethod.latin.uix.alex.SwipeCandidatesSliderSetting() },
+        UserSetting(name = R.string.alex_next_word_row) { org.futo.inputmethod.latin.uix.alex.SwipeLineSettings() },
+
+        // alex: Diagnostics - swipe log
+        userSettingDecorationOnly {
+            ScreenTitle(stringResource(R.string.alex_swipe_diagnostics_title))
+        },
+        UserSetting(name = R.string.alex_swipe_log) { org.futo.inputmethod.latin.uix.alex.SwipeLogSettings() },
+
         userSettingDecorationOnly {
             ScreenTitle(stringResource(R.string.swipe_settings_miscellaneous_title))
         },

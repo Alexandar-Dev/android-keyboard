@@ -116,7 +116,19 @@ val PredictiveTextMenu = UserSettingsMenu(
         ).copy(visibilityCheck = {
             // Opposite of visibilityCheckLMEnabled
             !useSharedPrefsBool(Settings.PREF_KEY_USE_TRANSFORMER_LM, true).value
-        })
+        }),
+
+        // alex: premesteno iz Advanced Parameters (vazi i za kucanje i za swipe)
+        userSettingToggleDataStore(
+            title = R.string.alex_scrollable_suggestions,
+            subtitle = R.string.alex_scrollable_suggestions_subtitle,
+            setting = org.futo.inputmethod.engine.general.UseExpandableSuggestionsForGeneralIME
+        ),
+        userSettingToggleDataStore(
+            title = R.string.alex_transformer_non_qwerty,
+            subtitle = R.string.alex_transformer_non_qwerty_subtitle,
+            setting = org.futo.inputmethod.latin.xlm.AllowTransformerOnNonQWERTYLayouts
+        ),
         //}
     )
 )

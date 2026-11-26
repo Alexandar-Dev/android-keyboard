@@ -97,4 +97,6 @@
     <string name="alex_ai_usage_reset">Resetuj</string>
     <string name="alex_ai_usage_reset_confirm">Sigurno? Tapni opet</string>
     <string name="alex_swipe_section_title">Učenje i ispravke</string>
+    <string name="alex_swipe_transformer_title">Transformer swipe</string>
+    <string name="alex_swipe_diagnostics_title">Dijagnostika</string>
 </resources>
