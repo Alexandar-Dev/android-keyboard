@@ -63,4 +63,18 @@
     <string name="alex_swipe_log_shortcut_unsupported">This launcher does not support shortcuts</string>
     <string name="alex_swipe_log_empty">Swipe log is empty</string>
     <string name="alex_indicator_transformer">Flat line under transformer suggestions</string>
+    <!-- alex: build 29 - kontekst i AI meni -->
+    <string name="alex_lm_context">Transformer context length</string>
+    <string name="alex_lm_context_subtitle">How much text before the cursor the transformer reads (characters). 70 = FUTO default (about 10 words, current line only). More = it knows what you are writing about, previous lines included, but suggestions may be a little slower.</string>
+    <string name="alex_lm_context_default">70 (FUTO)</string>
+    <string name="alex_ai_menu_title">AI</string>
+    <string name="alex_ai_topic_title">AI topic while typing</string>
+    <string name="alex_ai_topic_enable">Follow the topic of what I write</string>
+    <string name="alex_ai_topic_enable_subtitle">Every few sentences AI reads the text in the background and lists words that are likely to come next. Those words get a boost right away when you swipe or type, with no waiting. Text is sent to Anthropic (not in password or incognito fields).</string>
+    <string name="alex_ai_topic_strength">Topic word boost</string>
+    <string name="alex_ai_topic_strength_subtitle">How much a topic word is pushed up among suggestions. 0.3 = gentle, 1.0 = strong.</string>
+    <string name="alex_ai_topic_model">Model for the topic</string>
+    <string name="alex_ai_usage_title">AI usage</string>
+    <string name="alex_ai_usage_today">Requests today: %1$d · cost today: %2$s</string>
+    <string name="alex_ai_usage_month">This month: %1$d requests · %2$s</string>
 </resources>

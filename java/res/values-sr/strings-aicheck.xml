@@ -64,4 +64,18 @@
     <string name="alex_swipe_log_shortcut_label">Swipe log</string>
     <string name="alex_swipe_log_shortcut_unsupported">Ovaj launcher ne podržava prečice</string>
     <string name="alex_swipe_log_empty">Swipe log je prazan</string>
+    <!-- alex: build 29 - kontekst i AI meni -->
+    <string name="alex_lm_context">Dužina konteksta za transformer</string>
+    <string name="alex_lm_context_subtitle">Koliko teksta pre kursora transformer čita (znakova). 70 = FUTO podrazumevano (oko 10 reči, samo trenutni red). Više = zna o čemu pišeš, uključujući i prethodne redove, ali predlozi mogu biti malo sporiji.</string>
+    <string name="alex_lm_context_default">70 (FUTO)</string>
+    <string name="alex_ai_menu_title">AI</string>
+    <string name="alex_ai_topic_title">AI tema dok kucam</string>
+    <string name="alex_ai_topic_enable">Prati temu onoga što pišem</string>
+    <string name="alex_ai_topic_enable_subtitle">Na svakih nekoliko rečenica AI u pozadini pročita tekst i napravi listu reči koje verovatno slede. Te reči se odmah pojačaju kad svajpuješ ili kucaš, bez čekanja. Tekst ide Anthropic-u (ne u poljima za lozinku i inkognito).</string>
+    <string name="alex_ai_topic_strength">Pojačanje reči teme</string>
+    <string name="alex_ai_topic_strength_subtitle">Koliko se reč teme gura napred među predlozima. 0.3 = blago, 1.0 = jako.</string>
+    <string name="alex_ai_topic_model">Model za temu</string>
+    <string name="alex_ai_usage_title">AI potrošnja</string>
+    <string name="alex_ai_usage_today">Zahteva danas: %1$d · trošak danas: %2$s</string>
+    <string name="alex_ai_usage_month">Ovaj mesec: %1$d zahteva · %2$s</string>
 </resources>

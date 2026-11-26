@@ -294,7 +294,7 @@ private class AiCheckWindow(private val manager: KeyboardManagerForAction) : Act
 }
 
 @Composable
-private fun ApiKeySetting() {
+internal fun ApiKeySetting() {
     val (key, setKey) = useDataStore(AiCheckApiKey)
     var text by remember { mutableStateOf(key) }
     var status by remember { mutableStateOf<String?>(null) }
@@ -338,7 +338,7 @@ private fun ApiKeySetting() {
 }
 
 @Composable
-private fun ModelSetting() {
+internal fun ModelSetting() {
     val (model, setModel) = useDataStore(AiCheckModel)
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp)) {
         Text(stringResource(R.string.ai_check_model_title), style = MaterialTheme.typography.titleMedium)
@@ -361,13 +361,6 @@ val AiCheckAction = Action(
     name = R.string.ai_check_title,
     simplePressImpl = null,
     windowImpl = { manager, _ -> AiCheckWindow(manager) },
-    settingsMenu = UserSettingsMenu(
-        title = R.string.ai_check_settings_title,
-        navPath = "actions/ai_check",
-        registerNavPath = true,
-        settings = listOf(
-            UserSetting(name = R.string.ai_check_key_title, component = { ApiKeySetting() }),
-            UserSetting(name = R.string.ai_check_model_title, component = { ModelSetting() }),
-        )
-    )
+    // alex: podesavanja su sada u glavnom meniju "AI" (isti meni)
+    settingsMenu = org.futo.inputmethod.latin.uix.alex.AiSettingsMenu
 )

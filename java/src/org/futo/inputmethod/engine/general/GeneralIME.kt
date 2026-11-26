@@ -214,6 +214,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
 
     override fun onCreate() {
         languageModelFacilitator.launchProcessor()
+        org.futo.inputmethod.latin.uix.alex.AiUsage.init(context) // alex: brojanje AI troska
 
         // alex: red za sledecu rec trazi predloge preko transformera
         NextWordRowState.requester = { before ->
@@ -716,10 +717,12 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 if(rescored != null) dictResult = rescored
                 if(dbg != null) {
                     val ms = System.currentTimeMillis() - t0
-                    val head = "podesavanja: swipe=%.2f a=%.1f T=%.1f | vreme %d ms%s".format(
+                    val head = "podesavanja: swipe=%.2f a=%.1f T=%.1f ctx=%d tema=%.1f | vreme %d ms%s".format(
                         context.getSetting(org.futo.inputmethod.latin.xlm.SwipeLmWeightSetting),
                         context.getSetting(org.futo.inputmethod.latin.xlm.BinaryDictTransformerWeightSetting),
                         context.getSetting(org.futo.inputmethod.latin.xlm.AutocorrectThresholdSetting),
+                        org.futo.inputmethod.latin.xlm.lmContextChars(context),
+                        org.futo.inputmethod.latin.uix.alex.AiTopic.strength(context),
                         ms, if(!finished) " (ISTEKAO ROK 400 ms)" else "")
                     val before = try { inputLogic.mConnection.getTextBeforeCursor(60, 0)?.toString() } catch(e: Exception) { null }
                     val shown = dictResult?.mSuggestedWordInfoList?.take(6)?.joinToString(" ") {

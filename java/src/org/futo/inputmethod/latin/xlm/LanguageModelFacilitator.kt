@@ -30,6 +30,7 @@ import org.futo.inputmethod.latin.settings.Settings
 import org.futo.inputmethod.latin.uix.SettingsKey
 import org.futo.inputmethod.latin.uix.USE_TRANSFORMER_FINETUNING
 import org.futo.inputmethod.latin.uix.getSetting
+import org.futo.inputmethod.latin.uix.alex.AiTopic
 import org.futo.inputmethod.latin.utils.SuggestionResults
 import kotlin.math.ceil
 
@@ -49,6 +50,14 @@ val AllowTransformerOnNonQWERTYLayouts = SettingsKey(
     booleanPreferencesKey("allow_transformer_lm_on_non_qwerty"),
     true
 )
+
+// alex: koliko teksta pre kursora transformer vidi (FUTO: 70 znakova, samo trenutni red)
+val LmContextCharsSetting = SettingsKey(
+    floatPreferencesKey("alex_lm_context_chars"),
+    70f
+)
+fun lmContextChars(context: android.content.Context): Int =
+    context.getSetting(LmContextCharsSetting).let { kotlin.math.round(it).toInt() }.coerceIn(70, 600)
 
 // alex: koliko kandidata swipe dekoder vraca (i transformer ocenjuje); FUTO je imao fiksno 4
 val SwipeCandidatesSetting = SettingsKey(
@@ -280,7 +289,15 @@ public class LanguageModelFacilitator(
             14, values.ngramContext.isBeginningOfSentenceContext, false)
 
 
-        val reweightedSuggestions = lmSuggestions.mapIndexedNotNull { i, it ->
+        // alex: AI tema i kod kucanja: osvezi temu (pozadina) i pojacaj reci teme medju predlozima transformera
+        val topicStrength = AiTopic.strength(context)
+        if(topicStrength > 0f) {
+            val ia = settings.current?.mInputAttributes
+            AiTopic.update(context, values.ngramContext.fullContext,
+                ia != null && !ia.mIsPasswordField && !ia.mNoLearning)
+        }
+
+        val reweightedSuggestions0 = lmSuggestions.mapIndexedNotNull { i, it ->
             if(transformerWeight == Float.NEGATIVE_INFINITY) { null } else {
                 SuggestedWordInfo(
                     it.mWord,
@@ -294,6 +311,22 @@ public class LanguageModelFacilitator(
                 ).apply {
                     this.mOriginatesFromTransformerLM = true
                 }
+            }
+        }
+
+        val reweightedSuggestions = if(topicStrength <= 0f || reweightedSuggestions0.none { AiTopic.has(it.mWord) }) {
+            reweightedSuggestions0
+        } else {
+            // rec teme se primakne najboljem predlogu za deo razlike (jacina 1.0 = izjednaci se)
+            val top = reweightedSuggestions0.maxOf { it.mScore }.toLong()
+            reweightedSuggestions0.map {
+                if(!AiTopic.has(it.mWord)) it else SuggestedWordInfo(
+                    it.mWord, it.mPrevWordsContext,
+                    (it.mScore + ((top - it.mScore) * topicStrength.coerceIn(0f, 1f)).toLong())
+                        .coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt(),
+                    it.mKindAndFlags, it.mSourceDict, it.mIndexOfTouchPointOfSecondWord,
+                    it.mAutoCommitFirstWordConfidence
+                ).apply { this.mOriginatesFromTransformerLM = true }
             }
         }
 
@@ -475,6 +508,14 @@ public class LanguageModelFacilitator(
             settings.current.mSpacingAndPunctuations, 2
         )
         val top0 = list.take(swipeCandidateCount(context))
+        // alex: AI tema - u pozadini osvezi reci teme (ne ceka odgovor)
+        val topicStrength = AiTopic.strength(context)
+        if(topicStrength > 0f) {
+            val ia = settings.current?.mInputAttributes
+            AiTopic.update(context, ngramContext.fullContext,
+                ia != null && !ia.mIsPasswordField && !ia.mNoLearning)
+            dbg(AiTopic.logLine())
+        }
         if(swipeDebug != null) {
             dbg("kontekst: [${ngramContext.extractPrevWordsContext()}]")
             dbg("dekoder: " + list.take(16).joinToString(" ") { "${it.mWord}(${it.mScore})" })
@@ -500,6 +541,7 @@ public class LanguageModelFacilitator(
 
         val lp = lm.scoreWords(ngramContext, top.map { it.mWord })
         if(lp == null || lp.size != top.size) { dbg("preskoceno: scoreWords nije uspeo"); return null }
+        dbg("lm kontekst: ${lm.lastContextChars} znakova")
 
         val sMax = top0.maxOf { it.mScore }
         val lpMax = lp.max()
@@ -509,9 +551,13 @@ public class LanguageModelFacilitator(
             val d = if(i >= top0.size) SWIPE_PREDICTED_FIT
                     else (1f - (sMax - w.mScore) / SWIPE_SCORE_SPAN).coerceIn(0f, 1f)
             val l = ((lp[i] - lpMax) / SWIPE_LM_SPAN_NATS).coerceAtLeast(-1.0f)
-            if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> ${d + weight * l}")
-            if(swipeDebug != null) dbg("  ${if(i >= top0.size) "+" else " "}${w.mWord}: putanja=%.2f lm=%.1f -> %.2f".format(d, lp[i], d + weight * l))
-            w to (d + weight * l)
+            // alex: AI tema - rec iz teme dobija dodatak
+            val t = if(topicStrength > 0f && AiTopic.has(w.mWord)) topicStrength else 0f
+            val total = d + weight * l + t
+            if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> $total")
+            if(swipeDebug != null) dbg("  ${if(i >= top0.size) "+" else " "}${w.mWord}: putanja=%.2f lm=%.1f%s -> %.2f".format(
+                d, lp[i], if(t > 0f) " tema+%.2f".format(t) else "", total))
+            w to total
         }.sortedByDescending { it.second }.map { it.first }
 
         if(reranked.first() == top.first() && reranked == top) { dbg("redosled: bez promene"); return null }
@@ -560,6 +606,22 @@ public class LanguageModelFacilitator(
             if(swipeDebug != null) why.add("$w:$r")
         }
         if(swipeDebug != null) dbg("transformer predvidja: " + why.joinToString(" "))
+
+        // alex: AI tema - reci teme koje odgovaraju putanji ulaze medju kandidate (najvise 3)
+        val topic = if(AiTopic.strength(context) > 0f) AiTopic.current() else emptyList()
+        if(topic.isNotEmpty()) {
+            val whyT = ArrayList<String>()
+            var added = 0
+            for(w in topic) {
+                if(added >= 3) break
+                val lw = w.lowercase()
+                if(lw in have || ok.any { it.lowercase() == lw }) continue
+                val r = fitReason(kb, w, path)
+                if(r == null) { ok.add(w); added++ }
+                if(swipeDebug != null && r == null) whyT.add(w)
+            }
+            if(swipeDebug != null && whyT.isNotEmpty()) dbg("ai tema kandidati: " + whyT.joinToString(" "))
+        }
         return ok
     }
 

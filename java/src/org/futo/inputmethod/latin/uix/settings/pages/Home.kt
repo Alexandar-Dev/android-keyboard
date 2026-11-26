@@ -103,6 +103,14 @@ val HomeScreenLite = UserSettingsMenu(
             icon = R.drawable.text_prediction
         ),
 
+        // alex: AI meni (kljuc, model, AI tema)
+        userSettingNavigationItem(
+            title = R.string.alex_ai_menu_title,
+            style = NavigationItemStyle.HomeSecondary,
+            navigateTo = org.futo.inputmethod.latin.uix.alex.AiSettingsMenu.navPath,
+            icon = R.drawable.ai_check
+        ),
+
         UserSetting(
             name = R.string.voice_input_settings_title
         ) {

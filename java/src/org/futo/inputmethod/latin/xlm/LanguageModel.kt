@@ -11,6 +11,7 @@ import org.futo.inputmethod.latin.NgramContext
 import org.futo.inputmethod.latin.SuggestedWords
 import org.futo.inputmethod.latin.SuggestedWords.SuggestedWordInfo
 import org.futo.inputmethod.latin.common.ComposedData
+import org.futo.inputmethod.latin.uix.getSetting
 import org.futo.inputmethod.latin.settings.SettingsValuesForSuggestion
 import org.futo.inputmethod.latin.utils.JniUtils
 import java.util.Arrays
@@ -69,12 +70,32 @@ class LanguageModel(
         )
     }
 
+    // alex: duzina konteksta (podesavanje) - cita se jednom po pozivu
+    @Volatile private var ctxMaxChars = 70
+    // alex: koliko je znakova konteksta poslednji put poslato modelu (za swipe log)
+    @Volatile var lastContextChars = 0
+        private set
+    private fun readContextSettings() {
+        try {
+            ctxMaxChars = lmContextChars(applicationContext)
+        } catch (_: Exception) { }
+    }
+
     private fun getContext(composeInfo: ComposeInfo, ngramContext: NgramContext): String {
+        readContextSettings()
         var context = ngramContext.extractPrevWordsContext()
             .replace(NgramContext.BEGINNING_OF_SENTENCE_TAG, " ").trim { it <= ' ' }
         if (ngramContext.fullContext.isNotEmpty()) {
             context = ngramContext.fullContext
-            context = context.substring(context.lastIndexOf("\n") + 1).trim { it <= ' ' }
+            context = if (ctxMaxChars > 70) {
+                // alex: duzi kontekst ukljucuje i prethodne redove (Enter vise ne brise kontekst)
+                val lines = context.split('\n')
+                lines.mapIndexed { i, l ->
+                    val t = l.trim()
+                    // zavrseni redovi dobiju tacku (granica recenice); trenutni red ostaje kakav jeste
+                    if (i < lines.size - 1 && t.isNotEmpty() && t.last().isLetterOrDigit()) "$t." else t
+                }.filter { it.isNotEmpty() }.joinToString(" ").trim { it <= ' ' }
+            } else context.substring(context.lastIndexOf("\n") + 1).trim { it <= ' ' }
         }
 
         var partialWord = composeInfo.partialWord
@@ -129,6 +150,28 @@ class LanguageModel(
     private fun safeguardContext(ctx: String): String {
         var context = ctx
 
+        // alex: duzi kontekst (podesavanje > 70). Pocetak ostaje isti dok tekst ne predje granicu,
+        // pa se odsece na ~60% (model ponovo koristi vec izracunat pocetak = brze).
+        val maxChars = ctxMaxChars
+        if (maxChars > 70) {
+            // isti pocetak kao prosli put, samo ako je to stvarno isti tekst (prvih 30 znakova)
+            val prev = prevSafeguardContextResult
+            if (prev.length >= 30) {
+                val at = context.lastIndexOf(prev.take(30))
+                if (at > 0) context = context.substring(at)
+            }
+            if (context.length > maxChars) {
+                var cut = context.takeLast((maxChars * 0.6f).toInt())
+                val sp = cut.indexOf(' ')
+                if (sp in 0 until cut.length - 1) cut = cut.substring(sp + 1)
+                context = cut.trim { it <= ' ' }
+            }
+            if (context.length > 40 && !context.contains(' ')) context = ""   // spam bez razmaka
+            prevSafeguardContextResult = context
+            lastContextChars = context.length
+            return context
+        }
+
         // Start with what we used previously
         val matchStart = findLongestMatch(prevSafeguardContextResult, context)
         if(matchStart != -1) context = context.substring(matchStart)
@@ -156,6 +199,7 @@ class LanguageModel(
         }
 
         prevSafeguardContextResult = context
+        lastContextChars = context.length
 
         return context
     }

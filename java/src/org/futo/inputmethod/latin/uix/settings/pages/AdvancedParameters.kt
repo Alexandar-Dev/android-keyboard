@@ -45,6 +45,19 @@ fun AdvancedParametersScreen(navController: NavHostController = rememberNavContr
             steps = 19
         )
 
+        // alex: koliko teksta pre kursora transformer vidi
+        SettingSlider(
+            title = stringResource(R.string.alex_lm_context),
+            subtitle = stringResource(R.string.alex_lm_context_subtitle),
+            setting = org.futo.inputmethod.latin.xlm.LmContextCharsSetting,
+            range = 70.0f .. 600.0f,
+            hardRange = 70.0f .. 600.0f,
+            transform = { (kotlin.math.round(it / 10f) * 10f) },
+            indicator = { if(it <= 70.5f) resources.getString(R.string.alex_lm_context_default) else "${kotlin.math.round(it).toInt()}" },
+            steps = 52
+        )
+
+
         // alex: broj swipe kandidata koje transformer vidi
         SettingSlider(
             title = stringResource(R.string.alex_swipe_candidates),
