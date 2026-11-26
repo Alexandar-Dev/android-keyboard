@@ -60,6 +60,21 @@ object SwipePairs {
         return w.ifEmpty { "<s>" }
     }
 
+    /**
+     * prethodna rec iz teksta pre reci koja se svajpuje (bez nje): novi red, pocetak polja ili kraj
+     * recenice = "<s>". Isto se racuna pri ucenju i pri primeni (ngram kontekst je davao razlicite
+     * reci kod vise redova u poruci).
+     */
+    @JvmStatic
+    fun prevFromText(before: CharSequence?): String {
+        val s = before?.toString()?.trimEnd(' ', '\t') ?: return "<s>"
+        if (s.isEmpty()) return "<s>"
+        val c = s.last()
+        if (c == '\n' || c == '.' || c == '!' || c == '?') return "<s>"
+        val m = Regex("([\\p{L}\\d']+)[^\\p{L}\\d']*$").find(s) ?: return "<s>"
+        return m.groupValues[1].lowercase()
+    }
+
     @Synchronized
     private fun ensureLoaded(ctx: Context) {
         if (loaded) return

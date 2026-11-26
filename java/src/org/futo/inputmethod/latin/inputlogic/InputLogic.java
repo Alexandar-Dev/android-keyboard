@@ -461,9 +461,14 @@ public final class InputLogic {
                     && alexLogAllowed(settingsValues)) {
                 final String alexFirst = suggestedWords.getInfo(0).mWord;
                 if (!alexFirst.equals(suggestion)) {
-                    final String alexPrev = org.futo.inputmethod.latin.uix.alex.SwipePairs.INSTANCE.prevKey(
-                            getNgramContextFromNthPreviousWordForSuggestion(
-                                    settingsValues.mSpacingAndPunctuations, 2).extractPrevWordsContext());
+                    // tekst pre kursora bez aktivne (swipe) reci -> ista prethodna rec kao pri primeni
+                    final CharSequence alexTb = mConnection.getTextBeforeCursor(80 + alexFirst.length(), 0);
+                    String alexBeforeWord = alexTb == null ? "" : alexTb.toString();
+                    final String alexTyped = mWordComposer.getTypedWord();
+                    if (alexTyped != null && alexBeforeWord.endsWith(alexTyped)) {
+                        alexBeforeWord = alexBeforeWord.substring(0, alexBeforeWord.length() - alexTyped.length());
+                    }
+                    final String alexPrev = org.futo.inputmethod.latin.uix.alex.SwipePairs.prevFromText(alexBeforeWord);
                     final String alexLine = org.futo.inputmethod.latin.uix.alex.SwipePairs.INSTANCE.learn(
                             mImeHelper.getContext(), alexPrev, alexFirst, suggestion);
                     if (alexLine != null) {
@@ -2705,6 +2710,16 @@ public final class InputLogic {
         keyboardSwitcher.requestUpdatingShiftState(getCurrentAutoCapsState(settingsValues));
 
         updateUiInputState();
+
+        // alex: ispravka oblika prethodne reci je mozda vec izracunata (pre nego sto je ova rec
+        // postala aktivna) - primeni je sada; inace je facilitator primeni kad stigne
+        try {
+            final org.futo.inputmethod.latin.uix.alex.FormFix.Fix alexFix =
+                    org.futo.inputmethod.latin.uix.alex.FormFix.take(batchInputText);
+            if (alexFix != null && !alexApplyFormFixNow(alexFix)) {
+                org.futo.inputmethod.latin.uix.alex.FormFix.INSTANCE.offer(alexFix);
+            }
+        } catch (Exception ignored) { }
     }
 
     private void updateUiInputState() {

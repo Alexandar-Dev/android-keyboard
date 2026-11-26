@@ -719,9 +719,9 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                 try {
                     val dr = dictResult
                     if(dr != null && dr.size() > 1) {
-                        val prev = org.futo.inputmethod.latin.uix.alex.SwipePairs.prevKey(
-                            inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
-                                settings.current.mSpacingAndPunctuations, 2).extractPrevWordsContext())
+                        // nova swipe rec jos nije u tekstu: tekst pre kursora se zavrsava prethodnom reci
+                        val prev = org.futo.inputmethod.latin.uix.alex.SwipePairs.prevFromText(
+                            inputLogic.mConnection.getTextBeforeCursor(80, 0))
                         org.futo.inputmethod.latin.uix.alex.SwipePairs.apply(
                             context, prev, dr.mSuggestedWordInfoList.map { it.mWord }
                         )?.let { (i, line) ->
