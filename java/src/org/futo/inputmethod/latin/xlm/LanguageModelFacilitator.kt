@@ -160,6 +160,8 @@ private const val SWIPE_PREDICTED_FIT = 0.8f  // ocena swipe-a za takvu rec (naj
 private const val SWIPE_FIT_START = 1.1f      // udaljenost u sirinama tastera: pocetak putanje do prvog slova
 private const val SWIPE_FIT_END = 0.8f        // kraj putanje do poslednjeg slova (strozije: je/jer)
 private const val SWIPE_FIT_MID = 0.7f        // putanja mora proci blizu svakog slova izmedju
+private const val SWIPE_TOPIC_LOOSE = 1.6f     // AI tema: tolerancije putanje (pocetak/kraj/sredina) x1.6
+private const val SWIPE_TOPIC_FIT = 0.5f       // ocena putanje za rec teme ubacenu uz blazu proveru
 private const val SWIPE_FIT_LEN_RATIO = 1.6f  // putanja sme biti najvise 1.6x duza od idealne za rec
 private const val SWIPE_FIT_LEN_EXTRA = 1.5f  // + 1.5 tastera (krivudanje kod kratkih reci)
 
@@ -554,7 +556,7 @@ public class LanguageModelFacilitator(
 
         val reranked = top.mapIndexed { i, w ->
             // alex: po stvarnoj razlici od najboljeg (ranije min-max, pa je poslednji uvek dobijao 0)
-            val d = if(i >= top0.size) SWIPE_PREDICTED_FIT
+            val d = if(i >= top0.size) (if(w.mWord in topicInserted) SWIPE_TOPIC_FIT else SWIPE_PREDICTED_FIT)
                     else (1f - (sMax - w.mScore) / SWIPE_SCORE_SPAN).coerceIn(0f, 1f)
             val l = ((lp[i] - lpMax) / SWIPE_LM_SPAN_NATS).coerceAtLeast(-1.0f)
             // alex: AI tema - rec iz teme dobija dodatak
@@ -593,6 +595,9 @@ public class LanguageModelFacilitator(
 
     // alex: reci koje transformer ocekuje posle konteksta, a putanja swipe-a im odgovara
     // (pocetak, kraj i sva slova redom blizu putanje). Tako swipe nadje "što" i kad krene sa "p".
+    // reci teme ubacene uz blazu proveru putanje (dobijaju nizu ocenu putanje)
+    @Volatile private var topicInserted: Set<String> = emptySet()
+
     private suspend fun predictedSwipeWords(
         lm: LanguageModel, ngram: NgramContext, path: SwipePath, have: Set<String>
     ): List<String> {
@@ -615,18 +620,24 @@ public class LanguageModelFacilitator(
 
         // alex: AI tema - reci teme koje odgovaraju putanji ulaze medju kandidate (najvise 3)
         val topic = if(AiTopic.strength(context) > 0f) AiTopic.current() else emptyList()
+        topicInserted = emptySet()
         if(topic.isNotEmpty()) {
             val whyT = ArrayList<String>()
+            val ins = HashSet<String>()
             var added = 0
             for(w in topic) {
                 if(added >= 3) break
                 val lw = w.lowercase()
                 if(lw in have || ok.any { it.lowercase() == lw }) continue
-                val r = fitReason(kb, w, path)
-                if(r == null) { ok.add(w); added++ }
-                if(swipeDebug != null && r == null) whyT.add(w)
+                // blaza provera nego za predvidjanja transformera (korisnikov swipe je "slobodniji")
+                val r = fitReason(kb, w, path, SWIPE_TOPIC_LOOSE)
+                if(r == null) { ok.add(w); ins.add(w); added++ }
+                // u log: ubacene + odbijene koje su bar pocele/zavrsile blizu (za podesavanje)
+                if(swipeDebug != null && (r == null || r.startsWith("sredina") || r.startsWith("predugacka")))
+                    whyT.add(if(r == null) "$w:OK" else "$w:$r")
             }
-            if(swipeDebug != null && whyT.isNotEmpty()) dbg("ai tema kandidati: " + whyT.joinToString(" "))
+            topicInserted = ins
+            if(swipeDebug != null && whyT.isNotEmpty()) dbg("ai tema kandidati: " + whyT.take(8).joinToString(" "))
         }
         return ok
     }
@@ -658,7 +669,7 @@ public class LanguageModelFacilitator(
     private fun fitsSwipePath(kb: Keyboard, word: String, p: SwipePath): Boolean = fitReason(kb, word, p) == null
 
     // null = rec odgovara putanji; inace razlog odbijanja (za log)
-    private fun fitReason(kb: Keyboard, word: String, p: SwipePath): String? {
+    private fun fitReason(kb: Keyboard, word: String, p: SwipePath, loose: Float = 1f): String? {
         val kw = kb.mMostCommonKeyWidth.toFloat().coerceAtLeast(1f)
         val kh = kb.mMostCommonKeyHeight.toFloat().coerceAtLeast(1f)
         val centers = ArrayList<FloatArray>()
@@ -678,8 +689,8 @@ public class LanguageModelFacilitator(
             val dy = (p.ys[j] - c[1]) / kh
             return kotlin.math.sqrt(dx * dx + dy * dy)
         }
-        dist(0, centers.first()).let { if(it > SWIPE_FIT_START) return "pocetak%.1f".format(it) }
-        dist(p.n - 1, centers.last()).let { if(it > SWIPE_FIT_END) return "kraj%.1f".format(it) }
+        dist(0, centers.first()).let { if(it > SWIPE_FIT_START * loose) return "pocetak%.1f".format(it) }
+        dist(p.n - 1, centers.last()).let { if(it > SWIPE_FIT_END * loose) return "kraj%.1f".format(it) }
         // alex: putanja mnogo duza od one koju rec trazi (npr. "ne" za swipe "najverovatnije")
         var ideal = 0f
         for(k in 1 until centers.size) {
@@ -697,7 +708,7 @@ public class LanguageModelFacilitator(
             return "predugacka%.0f/%.0f".format(real, ideal)
         var j = 0
         for(k in 1 until centers.size - 1) {
-            while(j < p.n && dist(j, centers[k]) > SWIPE_FIT_MID) j++
+            while(j < p.n && dist(j, centers[k]) > SWIPE_FIT_MID * loose) j++
             if(j >= p.n) return "sredina_slovo${k + 1}"
         }
         return null
