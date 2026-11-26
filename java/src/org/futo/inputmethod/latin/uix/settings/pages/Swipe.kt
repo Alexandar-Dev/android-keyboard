@@ -57,6 +57,7 @@ import org.futo.inputmethod.latin.uix.settings.useDataStoreValue
 import org.futo.inputmethod.latin.uix.settings.userSettingDecorationOnly
 import org.futo.inputmethod.latin.uix.settings.userSettingNavigationItem
 import org.futo.inputmethod.latin.uix.settings.userSettingToggleSharedPrefs
+import org.futo.inputmethod.latin.uix.settings.userSettingToggleDataStore
 import org.futo.inputmethod.latin.uix.suggestionStyleAlternative
 import org.futo.inputmethod.latin.uix.suggestionStylePrimary
 import org.futo.inputmethod.updates.openURI
@@ -305,5 +306,13 @@ val SwipeMenu = UserSettingsMenu(
                 )
             }
         },
+
+        // alex: ucenje iz izbora posle swipe-a
+        userSettingToggleDataStore(
+            title = R.string.alex_swipe_learn,
+            subtitle = R.string.alex_swipe_learn_subtitle,
+            setting = org.futo.inputmethod.latin.uix.alex.SwipeLearnSetting
+        ),
+        UserSetting(name = R.string.alex_swipe_learn) { org.futo.inputmethod.latin.uix.alex.SwipePairsSetting() },
     )
 )

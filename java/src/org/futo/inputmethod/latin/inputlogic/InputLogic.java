@@ -455,6 +455,24 @@ public final class InputLogic {
                     "traka", alexPos, alexList,
                     alexBefore == null ? null : alexBefore.toString());
         } catch (Exception ignored) { }
+        // alex: ucenje iz izbora posle swipe-a (tap na drugi predlog umesto prvog)
+        try {
+            if (mWordComposer.isBatchMode() && suggestedWords.size() > 1
+                    && alexLogAllowed(settingsValues)) {
+                final String alexFirst = suggestedWords.getInfo(0).mWord;
+                if (!alexFirst.equals(suggestion)) {
+                    final String alexPrev = org.futo.inputmethod.latin.uix.alex.SwipePairs.INSTANCE.prevKey(
+                            getNgramContextFromNthPreviousWordForSuggestion(
+                                    settingsValues.mSpacingAndPunctuations, 2).extractPrevWordsContext());
+                    final String alexLine = org.futo.inputmethod.latin.uix.alex.SwipePairs.INSTANCE.learn(
+                            mImeHelper.getContext(), alexPrev, alexFirst, suggestion);
+                    if (alexLine != null) {
+                        org.futo.inputmethod.latin.uix.alex.SwipeLog.INSTANCE.event(
+                                mImeHelper.getContext(), true, alexLine);
+                    }
+                }
+            }
+        } catch (Exception ignored) { }
         // If this is a punctuation picked from the suggestion strip, pass it to onCodeInput
         if (suggestion.length() == 1 && suggestedWords.isPunctuationSuggestions()) {
             // We still want to log a suggestion click.

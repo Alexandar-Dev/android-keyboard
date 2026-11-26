@@ -715,6 +715,26 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
                     languageModelFacilitator.swipeDebug = null
                 }
                 if(rescored != null) dictResult = rescored
+                // alex: naucene zamene iz korisnikovih izbora (Settings -> Swipe -> Uci iz mojih izbora)
+                try {
+                    val dr = dictResult
+                    if(dr != null && dr.size() > 1) {
+                        val prev = org.futo.inputmethod.latin.uix.alex.SwipePairs.prevKey(
+                            inputLogic.getNgramContextFromNthPreviousWordForSuggestion(
+                                settings.current.mSpacingAndPunctuations, 2).extractPrevWordsContext())
+                        org.futo.inputmethod.latin.uix.alex.SwipePairs.apply(
+                            context, prev, dr.mSuggestedWordInfoList.map { it.mWord }
+                        )?.let { (i, line) ->
+                            val l = ArrayList(dr.mSuggestedWordInfoList)
+                            l.add(0, l.removeAt(i))
+                            dictResult = SuggestedWords(l, dr.mRawSuggestions, l[0], true, false, false,
+                                dr.mInputStyle, dr.mSequenceNumber)
+                            dbg?.append(line)?.append('\n')
+                        }
+                    }
+                } catch(e: Exception) {
+                    if(e is CancellationException) throw e
+                }
                 if(dbg != null) {
                     val ms = System.currentTimeMillis() - t0
                     val head = "podesavanja: swipe=%.2f a=%.1f T=%.1f ctx=%d tema=%.1f | vreme %d ms%s".format(

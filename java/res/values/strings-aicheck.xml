@@ -78,4 +78,11 @@
     <string name="alex_ai_usage_today">Requests today: %1$d · cost today: %2$s</string>
     <string name="alex_ai_usage_month">This month: %1$d requests · %2$s</string>
     <string name="alex_ai_usage_estimate">Approx. per month at this pace: %1$s</string>
+    <string name="alex_swipe_learn">Learn from my choices</string>
+    <string name="alex_swipe_learn_subtitle">When you tap a different suggestion after a swipe twice (e.g. Jebi → Kreni), that word comes first next time after the same previous word. Tapping the old word again undoes it.</string>
+    <string name="alex_swipe_pairs_count">Learned pairs: %1$d</string>
+    <string name="alex_swipe_pairs_export">Export</string>
+    <string name="alex_swipe_pairs_import">Import</string>
+    <string name="alex_swipe_pairs_clear">Clear all</string>
+    <string name="alex_swipe_pairs_imported">Imported pairs: %1$d</string>
 </resources>
