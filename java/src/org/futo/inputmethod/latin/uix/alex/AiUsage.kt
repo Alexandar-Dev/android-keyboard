@@ -72,5 +72,11 @@ object AiUsage {
         return st.monthCost / days * 30.0
     }
 
+    /** brise brojace (danas i mesec); pocetak pracenja = danas */
+    @Synchronized
+    fun reset(ctx: Context) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
+    }
+
     fun money(v: Double): String = if (v < 0.01) "$%.4f".format(v) else "$%.2f".format(v)
 }

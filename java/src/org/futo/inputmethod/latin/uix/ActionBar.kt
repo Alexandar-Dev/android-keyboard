@@ -38,6 +38,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import org.futo.inputmethod.latin.uix.alex.AiComposeStripChip
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -926,6 +927,9 @@ fun ActionBar(
                         } else {
                             Spacer(modifier = Modifier.weight(1.0f))
                         }
+
+                        // alex: dopuna recenice (AI) u traci predloga
+                        AiComposeStripChip(keyboardManagerForAction)
 
                         if(inlineSuggestions.isEmpty()) {
                             PinnedActionItems(onActionActivated, onActionAltActivated)

@@ -198,14 +198,14 @@ fun SwipePairsSetting() {
     Column(Modifier.fillMaxWidth().padding(16.dp, 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.alex_swipe_pairs_count, n), style = MaterialTheme.typography.bodyMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton(onClick = {
+            FilledTonalButton(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 8.dp), onClick = {
                 val msg = try { SwipePairs.exportToDownloads(ctx) } catch (e: Exception) { e.toString() }
                 Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
             }) { Text(stringResource(R.string.alex_swipe_pairs_export)) }
-            FilledTonalButton(onClick = { importLauncher.launch(arrayOf("text/*")) }) {
+            FilledTonalButton(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 8.dp), onClick = { importLauncher.launch(arrayOf("text/*")) }) {
                 Text(stringResource(R.string.alex_swipe_pairs_import))
             }
-            FilledTonalButton(onClick = { SwipePairs.clear(ctx); tick++ }) {
+            FilledTonalButton(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 8.dp), onClick = { SwipePairs.clear(ctx); tick++ }) {
                 Text(stringResource(R.string.alex_swipe_pairs_clear))
             }
         }

@@ -275,6 +275,29 @@ val SwipeMenu = UserSettingsMenu(
             )
         },
 
+        // alex: nasa sekcija (naslov levo, kao "Other"), pa FUTO "Other" na kraj
+        userSettingDecorationOnly {
+            ScreenTitle(stringResource(R.string.alex_swipe_section_title))
+        },
+
+        // alex: ucenje iz izbora posle swipe-a
+        userSettingToggleDataStore(
+            title = R.string.alex_swipe_learn,
+            subtitle = R.string.alex_swipe_learn_subtitle,
+            setting = org.futo.inputmethod.latin.uix.alex.SwipeLearnSetting
+        ),
+        UserSetting(name = R.string.alex_swipe_learn) {
+            // uvuceno ispod prekidaca (tekst prekidaca je na 80dp)
+            Box(Modifier.padding(start = 64.dp)) { org.futo.inputmethod.latin.uix.alex.SwipePairsSetting() }
+        },
+
+        // alex: ispravka oblika prethodne reci
+        userSettingToggleDataStore(
+            title = R.string.alex_form_fix,
+            subtitle = R.string.alex_form_fix_subtitle,
+            setting = org.futo.inputmethod.latin.uix.alex.FormFixSetting
+        ),
+
         userSettingDecorationOnly {
             ScreenTitle(stringResource(R.string.swipe_settings_miscellaneous_title))
         },
@@ -306,20 +329,5 @@ val SwipeMenu = UserSettingsMenu(
                 )
             }
         },
-
-        // alex: ucenje iz izbora posle swipe-a
-        userSettingToggleDataStore(
-            title = R.string.alex_swipe_learn,
-            subtitle = R.string.alex_swipe_learn_subtitle,
-            setting = org.futo.inputmethod.latin.uix.alex.SwipeLearnSetting
-        ),
-        UserSetting(name = R.string.alex_swipe_learn) { org.futo.inputmethod.latin.uix.alex.SwipePairsSetting() },
-
-        // alex: ispravka oblika prethodne reci
-        userSettingToggleDataStore(
-            title = R.string.alex_form_fix,
-            subtitle = R.string.alex_form_fix_subtitle,
-            setting = org.futo.inputmethod.latin.uix.alex.FormFixSetting
-        ),
     )
 )

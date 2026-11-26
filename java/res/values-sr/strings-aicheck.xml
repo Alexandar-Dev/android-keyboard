@@ -29,7 +29,7 @@
     <string name="ai_check_model_opus">Claude Opus 5.5 (najbolji, oko 1 cent po proveri)</string>
     <string name="ai_check_model_sonnet">Claude Sonnet 5.5 (brži, oko 0,5 centa)</string>
     <string name="ai_check_model_haiku">Claude Haiku 5.5 (najbrži, ispod 0,1 centa)</string>
-    <string name="ai_check_privacy">AI provera šalje tekst Anthropic-u samo kad pritisneš AI. Ako je AI tema uključena, tekst se šalje i u pozadini dok kucaš. Objašnjenja su na jeziku teksta.</string>
+    <string name="ai_check_privacy">AI provera šalje tekst Anthropic-u samo kad pritisneš AI. Ako je uključena AI tema ili dopuna rečenice, tekst se šalje i u pozadini dok kucaš. Objašnjenja su na jeziku teksta.</string>
     <string name="alex_swipe_lm_weight">Jačina transformera za swipe</string>
     <string name="alex_swipe_lm_weight_subtitle">Koliko transformer preuređuje swipe predloge prema rečenici. 0 = isključeno, 0,3 = podrazumevano, više = više veruje rečenici nego putanji prsta.</string>
     <string name="alex_swipe_lm_weight_off">isključeno</string>
@@ -88,4 +88,14 @@
     <string name="alex_swipe_pairs_imported">Uvezeno parova: %1$d</string>
     <string name="alex_form_fix">Ispravi oblik prethodne reči</string>
     <string name="alex_form_fix_subtitle">Kad svajpuješ sledeću reč, transformer proveri prethodnu i promeni je u pravi oblik, npr. „rezervni kopiju" → „rezervnu kopiju". Radi na telefonu, bez AI.</string>
+    <string name="alex_ai_compose_title">Dopuna rečenice</string>
+    <string name="alex_ai_compose_enable">Predloži ostatak rečenice</string>
+    <string name="alex_ai_compose_enable_subtitle">Kad zastaneš na sekundu, AI predloži kako se rečenica nastavlja. Tap ubacuje ceo nastavak, a ako nastaviš da kucaš, predlog nestaje. Tekst ide Anthropic-u (ne u poljima za lozinku i inkognito).</string>
+    <string name="alex_ai_compose_where">Gde da se prikaže</string>
+    <string name="alex_ai_compose_where_row">Poseban red (drugi, ili treći ako je uključen red za sledeću reč)</string>
+    <string name="alex_ai_compose_where_strip">U traci predloga (bez dodatnog reda)</string>
+    <string name="alex_ai_usage_reset">Resetuj</string>
+    <string name="alex_ai_usage_reset_confirm">Sigurno? Tapni opet</string>
+    <string name="alex_swipe_section_title">Učenje i ispravke</string>
+    <string name="auto_correction_summary">Razmak i interpunkcija sami ispravljaju pogrešno otkucane reči. Ispravku daju rečnik i transformer zajedno. Kad je isključeno, predlozi su samo u traci.</string>
 </resources>

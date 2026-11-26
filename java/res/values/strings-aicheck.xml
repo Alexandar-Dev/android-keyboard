@@ -28,7 +28,7 @@
     <string name="ai_check_model_opus">Claude Opus 5.5 (best, about 1 cent per check)</string>
     <string name="ai_check_model_sonnet">Claude Sonnet 5.5 (faster, about 0.5 cent)</string>
     <string name="ai_check_model_haiku">Claude Haiku 5.5 (fastest, under 0.1 cent)</string>
-    <string name="ai_check_privacy">AI check sends text to Anthropic only when you tap AI. If AI topic is on, text is also sent in the background while you type. Explanations follow the language of the text.</string>
+    <string name="ai_check_privacy">AI check sends text to Anthropic only when you tap AI. If AI topic or sentence completion is on, text is also sent in the background while you type. Explanations follow the language of the text.</string>
     <string name="alex_swipe_lm_weight">Transformer strength for swipe</string>
     <string name="alex_swipe_lm_weight_subtitle">How much the transformer reorders swipe suggestions by the sentence. 0 = off, 0.3 = default, higher = trusts the sentence more than the swipe path.</string>
     <string name="alex_swipe_lm_weight_off">off</string>
@@ -87,4 +87,13 @@
     <string name="alex_swipe_pairs_imported">Imported pairs: %1$d</string>
     <string name="alex_form_fix">Fix the form of the previous word</string>
     <string name="alex_form_fix_subtitle">When you swipe the next word, the transformer checks the previous one and changes it to the right form, e.g. \"rezervni kopiju\" → \"rezervnu kopiju\". Works on the phone, no AI.</string>
+    <string name="alex_ai_compose_title">Sentence completion</string>
+    <string name="alex_ai_compose_enable">Suggest the rest of the sentence</string>
+    <string name="alex_ai_compose_enable_subtitle">When you pause for a second, AI suggests how the sentence continues. Tap it to insert it all at once; keep typing and it disappears. Text is sent to Anthropic (not in password or incognito fields).</string>
+    <string name="alex_ai_compose_where">Where to show it</string>
+    <string name="alex_ai_compose_where_row">Separate row (second row, or third if the next-word row is on)</string>
+    <string name="alex_ai_compose_where_strip">In the suggestion bar (no extra row)</string>
+    <string name="alex_ai_usage_reset">Reset</string>
+    <string name="alex_ai_usage_reset_confirm">Sure? Tap again</string>
+    <string name="alex_swipe_section_title">Learning and corrections</string>
 </resources>

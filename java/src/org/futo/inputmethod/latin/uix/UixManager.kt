@@ -751,6 +751,8 @@ class UixManager(private val latinIME: LatinIME) {
             // alex: red za sledecu rec posle swipe-a (u kliznom rezimu ide ispod kliznih predloga, vidi dole)
             if(!needToUseExpandableSuggestionUi) {
                 org.futo.inputmethod.latin.uix.alex.NextWordRow(keyboardManagerForAction)
+                // alex: dopuna recenice (AI) - drugi red, ili treci ako je ukljucen red za sledecu rec
+                org.futo.inputmethod.latin.uix.alex.AiComposeRow(keyboardManagerForAction)
             }
         }
     }
@@ -1344,6 +1346,12 @@ class UixManager(private val latinIME: LatinIME) {
                                     .offset(y = latinIME.sizingCalculator.calculateSuggestionBarHeightDp().dp)) {
                                     org.futo.inputmethod.latin.uix.alex.NextWordRow(keyboardManagerForAction)
                                 }
+                            }
+                            // alex: dopuna recenice (AI) ispod kliznih predloga / reda za sledecu rec
+                            Box(Modifier.align(Alignment.TopStart).fillMaxWidth()
+                                .offset(y = latinIME.sizingCalculator.calculateSuggestionBarHeightDp().dp +
+                                    (if(alexNextRowOn) org.futo.inputmethod.latin.uix.alex.NEXT_WORD_ROW_HEIGHT else 0.dp))) {
+                                org.futo.inputmethod.latin.uix.alex.AiComposeRow(keyboardManagerForAction)
                             }
                         }
                         latinIME.LegacyKeyboardView(modifier = Modifier

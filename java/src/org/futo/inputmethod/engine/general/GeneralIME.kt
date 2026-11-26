@@ -215,6 +215,9 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
     override fun onCreate() {
         languageModelFacilitator.launchProcessor()
         org.futo.inputmethod.latin.uix.alex.AiUsage.init(context) // alex: brojanje AI troska
+        org.futo.inputmethod.latin.uix.alex.AiCompose.currentText = { // alex: dopuna recenice
+            try { inputLogic.mConnection.getTextBeforeCursor(1500, 0)?.toString() } catch(e: Exception) { null }
+        }
 
         // alex: red za sledecu rec trazi predloge preko transformera
         NextWordRowState.requester = { before ->
@@ -832,6 +835,13 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
     fun updateSuggestions(inputStyle: Int) {
         updateSuggestionJob?.cancel()
         if(inputStyle == SuggestedWords.INPUT_STYLE_TYPING) NextWordRowState.clear() // alex
+        // alex: dopuna recenice - svaki unos skloni stari predlog; posle pauze trazi novi
+        if(inputStyle != SuggestedWords.INPUT_STYLE_UPDATE_BATCH) try {
+            val ia = settings.current.mInputAttributes
+            org.futo.inputmethod.latin.uix.alex.AiCompose.onInput(context,
+                !ia.mIsPasswordField && !ia.mNoLearning,
+                inputLogic.mWordComposer.isComposingWord && !inputLogic.mWordComposer.isBatchMode)
+        } catch(e: Exception) { }
 
         val isSwipe = inputStyle == SuggestedWords.INPUT_STYLE_TAIL_BATCH
                 || inputStyle == SuggestedWords.INPUT_STYLE_UPDATE_BATCH

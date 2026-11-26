@@ -451,15 +451,31 @@ fun<T> SettingRadio(
     subcontent: List<@Composable () -> Unit>? = null,
 ) {
     ScreenTitle(title, showBack = false)
+    // alex: kruzic u istoj liniji kao tekst ostalih stavki (80dp), tekst desno od njega
+    // (FUTO ga je crtao u koloni ikonice, pa je "ispadao" levo)
     Column {
         options.zip(optionNames).forEachIndexed { i, it ->
-            SettingItem(title = it.second, onClick = { setting.setValue(it.first) }, icon = {
-                RadioButton(selected = setting.value == it.first, onClick = null)
-            }, modifier = modifier.clearAndSetSemantics {
-                this.text = AnnotatedString(it.second)
-                this.role = Role.RadioButton
-                this.selected = setting.value == it.first
-            }, subcontent = subcontent?.getOrNull(i)) {
+            val sel = setting.value == it.first
+            Column(
+                modifier.fillMaxWidth()
+                    .clickable { setting.setValue(it.first) }
+                    .clearAndSetSemantics {
+                        this.text = AnnotatedString(it.second)
+                        this.role = Role.RadioButton
+                        this.selected = sel
+                    }
+                    .padding(start = 78.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = sel, onClick = null)
+                    Spacer(Modifier.width(12.dp))
+                    Text(it.second, style = Typography.Heading.RegularMl,
+                        color = MaterialTheme.colorScheme.onBackground)
+                }
+                subcontent?.getOrNull(i)?.let { sc ->
+                    Spacer(Modifier.height(4.dp))
+                    Box(Modifier.padding(start = 2.dp)) { sc() }
+                }
                 hints?.getOrNull(i)?.invoke()
             }
         }

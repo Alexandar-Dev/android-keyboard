@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -346,13 +347,14 @@ internal fun ModelSetting() {
         AI_MODELS.forEach { (id, label) ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().selectable(selected = model == id, onClick = { setModel(id) }).padding(vertical = 4.dp)
+                modifier = Modifier.fillMaxWidth().selectable(selected = model == id, onClick = { setModel(id) }).padding(vertical = 4.dp).offset(x = 52.dp)
             ) {
                 RadioButton(selected = model == id, onClick = { setModel(id) })
                 Text(stringResource(label))
             }
         }
-        Text(stringResource(R.string.ai_check_privacy), style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.ai_check_privacy), style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 64.dp, top = 4.dp)) // u liniji sa tekstom opcija (80dp)
     }
 }
 
