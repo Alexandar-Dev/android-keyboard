@@ -554,13 +554,25 @@ public class LanguageModelFacilitator(
         val sMax = top0.maxOf { it.mScore }
         val lpMax = lp.max()
 
+        // alex: AI tema ne bira izmedju oblika iste reci (pijaci/pijacu, kupus/kupusa): ako drugi kandidat
+        // ima isti pocetak (5 slova) a nije u temi, bonus se ne daje - padez/oblik bira transformer
+        val topicWords = top.map { it.mWord }
+        fun sameLemmaOutsideTopic(word: String): Boolean {
+            val stem = word.lowercase().take(5)
+            if (stem.length < 4) return false
+            return topicWords.any { o -> o != word && o.lowercase().startsWith(stem) && !AiTopic.has(o) }
+        }
+
         val reranked = top.mapIndexed { i, w ->
             // alex: po stvarnoj razlici od najboljeg (ranije min-max, pa je poslednji uvek dobijao 0)
             val d = if(i >= top0.size) (if(w.mWord in topicInserted) SWIPE_TOPIC_FIT else SWIPE_PREDICTED_FIT)
                     else (1f - (sMax - w.mScore) / SWIPE_SCORE_SPAN).coerceIn(0f, 1f)
             val l = ((lp[i] - lpMax) / SWIPE_LM_SPAN_NATS).coerceAtLeast(-1.0f)
             // alex: AI tema - rec iz teme dobija dodatak
-            val t = if(topicStrength > 0f && AiTopic.has(w.mWord)) topicStrength else 0f
+            // bonus samo za reci koje je ponudio dekoder; rec koju je ubacila tema vec je dobila mesto
+            // (sa nizom ocenom putanje), dupli bonus je u testu gurao "ispravka" ispred "podešavanja"
+            val t = if(topicStrength > 0f && i < top0.size && AiTopic.has(w.mWord)
+                && !sameLemmaOutsideTopic(w.mWord)) topicStrength else 0f
             val total = d + weight * l + t
             if(BuildConfig.DEBUG) Log.d(TAG, "swipe rescore [${w.mWord}] dict=$d lm=${lp[i]} -> $total")
             if(swipeDebug != null) dbg("  ${if(i >= top0.size) "+" else " "}${w.mWord}: putanja=%.2f lm=%.1f%s -> %.2f".format(
