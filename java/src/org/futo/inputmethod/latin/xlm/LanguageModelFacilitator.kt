@@ -160,6 +160,8 @@ private const val SWIPE_PREDICTED_FIT = 0.8f  // ocena swipe-a za takvu rec (naj
 private const val SWIPE_FIT_START = 1.1f      // udaljenost u sirinama tastera: pocetak putanje do prvog slova
 private const val SWIPE_FIT_END = 0.8f        // kraj putanje do poslednjeg slova (strozije: je/jer)
 private const val SWIPE_FIT_MID = 0.7f        // putanja mora proci blizu svakog slova izmedju
+private const val FORM_FIX_MIN_FIT = 0.5f      // ispravka oblika: drugi oblik mora imati ocenu putanje bar 0.5
+private const val FORM_FIX_MIN_GAIN = 2.0f     // ... i biti bolji za bar 2 nata (oko 7x verovatniji)
 private const val SWIPE_TOPIC_LOOSE = 1.6f     // AI tema: tolerancije putanje (pocetak/kraj/sredina) x1.6
 private const val SWIPE_TOPIC_FIT = 0.5f       // ocena putanje za rec teme ubacenu uz blazu proveru
 private const val SWIPE_FIT_LEN_RATIO = 1.6f  // putanja sme biti najvise 1.6x duza od idealne za rec
@@ -580,6 +582,14 @@ public class LanguageModelFacilitator(
             w to total
         }.sortedByDescending { it.second }.map { it.first }
 
+        // alex: ispravka oblika prethodne reci (u pozadini, ne ceka se); pa zapamti ovaj swipe za sledeci
+        try {
+            scheduleFormFix(lm, ngramContext.fullContext, reranked.first().mWord, lastSwipeForms)
+        } catch(e: Exception) {
+            if(e is CancellationException) throw e
+        }
+        lastSwipeForms = top0.map { it.mWord to (1f - (sMax - it.mScore) / SWIPE_SCORE_SPAN).coerceIn(0f, 1f) }
+
         if(reranked.first() == top.first() && reranked == top) { dbg("redosled: bez promene"); return null }
         dbg("redosled: " + reranked.joinToString(" ") { it.mWord })
 
@@ -594,6 +604,57 @@ public class LanguageModelFacilitator(
             dict.mInputStyle,
             dict.mSequenceNumber
         )
+    }
+
+    // alex: kandidati prethodnog swipe-a (rec -> ocena putanje), za ispravku oblika
+    @Volatile private var lastSwipeForms: List<Pair<String, Float>>? = null
+
+    /**
+     * Prethodna rec P je dosla od swipe-a; medju njenim kandidatima ima drugih oblika iste reci
+     * (isti pocetak, 4 slova). Kad je sada svajpovana rec W, transformer uporedi
+     * "P W" i "oblik W" (verovatnoca oblika posle konteksta + verovatnoca W posle oblika).
+     * Ako je drugi oblik jasno bolji, ostavlja predlog u FormFix; primenjuje ga InputLogic.
+     */
+    private fun scheduleFormFix(lm: LanguageModel, fullText: String, w: String,
+                                prev: List<Pair<String, Float>>?) {
+        org.futo.inputmethod.latin.uix.alex.FormFix.offer(null)
+        if(!context.getSetting(org.futo.inputmethod.latin.uix.alex.FormFixSetting)) return
+        if(prev.isNullOrEmpty()) return
+        val text = fullText.trimEnd()
+        val m = Regex("([\\p{L}]+)$").find(text) ?: return
+        val p = m.value
+        val pl = p.lowercase()
+        if(prev.none { it.first.lowercase() == pl }) return   // prethodna rec nije iz ovog swipe-a
+        if(pl.length < 4) return
+        val forms = prev.filter { (word, d) ->
+            val o = word.lowercase()
+            o != pl && o.length >= 4 && o.take(4) == pl.take(4) && d >= FORM_FIX_MIN_FIT
+        }.map { it.first }.distinct()
+        if(forms.isEmpty()) return
+        val before = text.substring(0, m.range.first).trimEnd()
+        val pw = personalWords()
+        lifecycleScope.launch {
+            try {
+                val cands = listOf(p) + forms
+                val a = lm.scoreWordsRaw(before, cands, pw) ?: return@launch
+                val s = FloatArray(cands.size)
+                for(i in cands.indices) {
+                    val b = lm.scoreWordsRaw("$before ${cands[i]}".trim(), listOf(w), pw) ?: return@launch
+                    s[i] = a[i] + b[0]
+                }
+                var best = 0
+                for(i in cands.indices) if(s[i] > s[best]) best = i
+                val gain = s[best] - s[0]
+                if(best != 0 && gain >= FORM_FIX_MIN_GAIN) {
+                    org.futo.inputmethod.latin.uix.alex.FormFix.offer(
+                        org.futo.inputmethod.latin.uix.alex.FormFix.Fix(
+                            p, org.futo.inputmethod.latin.uix.alex.FormFix.matchCase(p, cands[best]), w, gain))
+                }
+            } catch(e: Exception) {
+                if(e is CancellationException) throw e
+                Log.e(TAG, "form fix failed", e)
+            }
+        }
     }
 
     private class SwipePath(val xs: IntArray, val ys: IntArray, val n: Int)

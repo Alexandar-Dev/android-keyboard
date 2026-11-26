@@ -419,6 +419,22 @@ class LanguageModel(
     }
 
     // alex: log-verovatnoca svake reci (swipe kandidati) posle konteksta
+    // alex: isto kao scoreWords, ali kontekst je zadat tekstom (za ispravku oblika prethodne reci)
+    suspend fun scoreWordsRaw(
+        rawContext: String,
+        words: List<String>,
+        personalDictionary: List<String> = emptyList()
+    ): FloatArray? = withContext(LanguageModelScope) {
+        if(!loadModelIfNeeded()) return@withContext null
+        if(words.isEmpty()) return@withContext null
+        readContextSettings()
+        val context = addPersonalDictionary(safeguardContext(rawContext.trim()), personalDictionary)
+        val n = words.size.coerceAtMost(16)
+        val out = FloatArray(n)
+        scoreWordsNative(mNativeState, context, words.take(n).toTypedArray(), out)
+        return@withContext out
+    }
+
     suspend fun scoreWords(
         ngramContext: NgramContext,
         words: List<String>,

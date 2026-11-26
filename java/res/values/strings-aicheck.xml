@@ -85,4 +85,6 @@
     <string name="alex_swipe_pairs_import">Import</string>
     <string name="alex_swipe_pairs_clear">Clear all</string>
     <string name="alex_swipe_pairs_imported">Imported pairs: %1$d</string>
+    <string name="alex_form_fix">Fix the form of the previous word</string>
+    <string name="alex_form_fix_subtitle">When you swipe the next word, the transformer checks the previous one and changes it to the right form, e.g. \"rezervni kopiju\" → \"rezervnu kopiju\". Works on the phone, no AI.</string>
 </resources>

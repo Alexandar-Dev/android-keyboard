@@ -314,5 +314,12 @@ val SwipeMenu = UserSettingsMenu(
             setting = org.futo.inputmethod.latin.uix.alex.SwipeLearnSetting
         ),
         UserSetting(name = R.string.alex_swipe_learn) { org.futo.inputmethod.latin.uix.alex.SwipePairsSetting() },
+
+        // alex: ispravka oblika prethodne reci
+        userSettingToggleDataStore(
+            title = R.string.alex_form_fix,
+            subtitle = R.string.alex_form_fix_subtitle,
+            setting = org.futo.inputmethod.latin.uix.alex.FormFixSetting
+        ),
     )
 )

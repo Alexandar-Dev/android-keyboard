@@ -86,4 +86,6 @@
     <string name="alex_swipe_pairs_import">Uvezi</string>
     <string name="alex_swipe_pairs_clear">Obriši sve</string>
     <string name="alex_swipe_pairs_imported">Uvezeno parova: %1$d</string>
+    <string name="alex_form_fix">Ispravi oblik prethodne reči</string>
+    <string name="alex_form_fix_subtitle">Kad svajpuješ sledeću reč, transformer proveri prethodnu i promeni je u pravi oblik, npr. „rezervni kopiju" → „rezervnu kopiju". Radi na telefonu, bez AI.</string>
 </resources>

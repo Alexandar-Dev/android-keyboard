@@ -2739,6 +2739,25 @@ public final class InputLogic {
         }
     }
 
+    private void alexApplyFormFix(final SettingsValues settingsValues, final String committed) {
+        final org.futo.inputmethod.latin.uix.alex.FormFix.Fix fix =
+                org.futo.inputmethod.latin.uix.alex.FormFix.take(committed);
+        if (fix == null || settingsValues.mInputAttributes.mIsPasswordField) return;
+        final String oldSeg = fix.getOldWord() + " " + committed;
+        final CharSequence before = mConnection.getTextBeforeCursor(oldSeg.length() + 1, 0);
+        if (before == null) return;
+        final String b = before.toString();
+        if (!b.endsWith(oldSeg)) return;
+        // rec ispred mora biti cela (ne deo duze reci)
+        if (b.length() > oldSeg.length() && Character.isLetter(b.charAt(b.length() - oldSeg.length() - 1))) return;
+        mConnection.deleteTextBeforeCursor(oldSeg.length());
+        mConnection.commitText(fix.getNewWord() + " " + committed, 1);
+        org.futo.inputmethod.latin.uix.alex.SwipeLog.INSTANCE.event(mImeHelper.getContext(),
+                alexLogAllowed(settingsValues),
+                "oblik: " + fix.getOldWord() + " -> " + fix.getNewWord() + " (ispred " + committed
+                        + String.format(java.util.Locale.US, ", +%.1f)", fix.getGain()));
+    }
+
     // alex: log samo van lozinki / inkognita
     private static boolean alexLogAllowed(final SettingsValues settingsValues) {
         return !settingsValues.mInputAttributes.mIsPasswordField
@@ -2783,6 +2802,10 @@ public final class InputLogic {
             final boolean isBatchMode = mWordComposer.isBatchMode();
             commitChosenWord(settingsValues, stringToCommit,
                     LastComposedWord.COMMIT_TYPE_DECIDED_WORD, separator, 0);
+            // alex: ispravka oblika prethodne reci kad se upise swipe rec ("rezervni kopiju" -> "rezervnu kopiju")
+            if (isBatchMode) {
+                try { alexApplyFormFix(settingsValues, stringToCommit); } catch (Exception ignored) { }
+            }
             // alex: swipe log - kucanje: sta je otkucano, sta je upisano i odakle je ispravka
             if (!isBatchMode) {
                 try {
