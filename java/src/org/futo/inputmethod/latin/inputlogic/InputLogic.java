@@ -2739,6 +2739,37 @@ public final class InputLogic {
         }
     }
 
+    /**
+     * alex: ispravka oblika odmah, dok je nova swipe rec jos aktivna (composing) - da radi i kad se
+     * poruka posalje bez razmaka. Vraca true ako je primenjena.
+     */
+    public boolean alexApplyFormFixNow(final org.futo.inputmethod.latin.uix.alex.FormFix.Fix fix) {
+        final SettingsValues settingsValues = Settings.getInstance().getCurrent();
+        if (fix == null || settingsValues == null || settingsValues.mInputAttributes.mIsPasswordField) return false;
+        if (!mWordComposer.isComposingWord() || !mWordComposer.isBatchMode()) return false;
+        final String w = mWordComposer.getTypedWord();
+        if (w == null || !w.equals(fix.getNextWord())) return false;
+        final String oldSeg = fix.getOldWord() + " ";
+        final CharSequence before = mConnection.getTextBeforeCursor(w.length() + oldSeg.length() + 1, 0);
+        if (before == null) return false;
+        final String b = before.toString();
+        // tekst pre kursora: "... P W" (W je composing)
+        if (!b.endsWith(oldSeg + w)) return false;
+        final int start = b.length() - (oldSeg.length() + w.length());
+        if (start > 0 && Character.isLetter(b.charAt(start - 1))) return false;
+        mConnection.beginBatchEdit();
+        mConnection.finishComposingText();
+        mConnection.deleteTextBeforeCursor(oldSeg.length() + w.length());
+        mConnection.commitText(fix.getNewWord() + " ", 1);
+        setComposingTextInternal(w, 1);
+        mConnection.endBatchEdit();
+        org.futo.inputmethod.latin.uix.alex.SwipeLog.INSTANCE.event(mImeHelper.getContext(),
+                alexLogAllowed(settingsValues),
+                "oblik: " + fix.getOldWord() + " -> " + fix.getNewWord() + " (ispred " + w
+                        + String.format(java.util.Locale.US, ", +%.1f, odmah)", fix.getGain()));
+        return true;
+    }
+
     private void alexApplyFormFix(final SettingsValues settingsValues, final String committed) {
         final org.futo.inputmethod.latin.uix.alex.FormFix.Fix fix =
                 org.futo.inputmethod.latin.uix.alex.FormFix.take(committed);

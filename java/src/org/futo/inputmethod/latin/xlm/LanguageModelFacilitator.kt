@@ -646,9 +646,13 @@ public class LanguageModelFacilitator(
                 for(i in cands.indices) if(s[i] > s[best]) best = i
                 val gain = s[best] - s[0]
                 if(best != 0 && gain >= FORM_FIX_MIN_GAIN) {
-                    org.futo.inputmethod.latin.uix.alex.FormFix.offer(
-                        org.futo.inputmethod.latin.uix.alex.FormFix.Fix(
-                            p, org.futo.inputmethod.latin.uix.alex.FormFix.matchCase(p, cands[best]), w, gain))
+                    val fix = org.futo.inputmethod.latin.uix.alex.FormFix.Fix(
+                        p, org.futo.inputmethod.latin.uix.alex.FormFix.matchCase(p, cands[best]), w, gain)
+                    // odmah, dok je W jos aktivna rec; ako vec nije (korisnik je nastavio), pri upisu W
+                    val applied = withContext(Dispatchers.Main) {
+                        try { inputLogic.alexApplyFormFixNow(fix) } catch(e: Exception) { false }
+                    }
+                    org.futo.inputmethod.latin.uix.alex.FormFix.offer(if(applied) null else fix)
                 }
             } catch(e: Exception) {
                 if(e is CancellationException) throw e
